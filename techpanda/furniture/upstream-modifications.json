@@ -83,7 +83,7 @@
     },
     {
       "path": "frontend/screenshot.mjs",
-      "change": "Add deterministic Property View solar enabled/disabled preview shots and a preference reload assertion.",
+      "change": "Add deterministic Property View solar enabled/disabled preview shots and a preference reload assertion; identify known optional preview-only missing-pack and favicon 404s without masking other browser errors.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
