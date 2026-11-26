@@ -1,6 +1,7 @@
 name: TechPanda CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [techpanda-custom]
   pull_request:
