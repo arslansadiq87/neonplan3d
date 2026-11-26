@@ -7,7 +7,13 @@
   "downstream_branch": "techpanda-custom",
   "downstream_version": "4.0.2.1",
   "release_tag": "v4.0.2.1",
-  "release_status": "prepared-not-published",
+  "release_status": "published",
+  "release_commit": "c243a9b7b8492b467d6ebe6163e79f22422ac433",
+  "ci_run": "https://github.com/arslansadiq87/neonplan3d/actions/runs/45869515505",
+  "assets_sha256": {
+    "neonplan3d.zip": "d0c909837f70337869d7f3e25f42eb2b50ea03ab5586d81b7bebec5d92db2c0a",
+    "techpanda-water-tanks.fp3dpack": "12c0f6fd5c655dc99c4c66f950d553d0d70036c0fe8d2636591e9eaf74dd19ab"
+  },
   "runtime_overlay_paths": [
     "packs.py",
     "manifest.json",
