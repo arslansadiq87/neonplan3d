@@ -27,11 +27,8 @@ jobs:
           fi
       - name: Pack the integration
         run: |
-          cd custom_components/neonplan3d
-          find . -name '__pycache__' -prune -o -type f -print | sed 's|^\./||' | sort > /tmp/files
-          zip -q -X ../../neonplan3d.zip -@ < /tmp/files
-          cd ../..
-          unzip -l neonplan3d.zip | tail -1
+          python tools/package_hacs_release.py custom_components/neonplan3d neonplan3d.zip
+          python tools/package_hacs_release.py --verify-only custom_components/neonplan3d neonplan3d.zip
       - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}

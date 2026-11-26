@@ -53,3 +53,15 @@ jobs:
       - run: mypy custom_components/neonplan3d
       - run: pytest -q
       - run: python techpanda/furniture/verify_registry.py --upstream-tag v4.0.2
+
+  hacs-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build, extract and hash-check HACS archive on Linux
+        run: python tools/package_hacs_release.py custom_components/neonplan3d /tmp/neonplan3d.zip
+      - name: Verify the archive structure independently
+        run: python tools/package_hacs_release.py --verify-only custom_components/neonplan3d /tmp/neonplan3d.zip

@@ -68,14 +68,9 @@ function Get-NeonPlanDeployArtifact {
     }
     $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $artifact)
     if (Test-Path -LiteralPath $artifact) { Remove-Item -LiteralPath $artifact -Force }
-    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $artifact -CompressionLevel Optimal
-    $zip = [IO.Compression.ZipFile]::OpenRead($artifact)
-    try {
-        if (-not ($zip.Entries.FullName -contains 'manifest.json')) { throw 'HACS ZIP must place manifest.json at archive root.' }
-        $archiveFiles = @($zip.Entries | Where-Object { -not $_.FullName.EndsWith('/') }).Count
-        if ($archiveFiles -ne @(Get-NeonPlanFiles $script:Integration).Count) { throw 'HACS archive file count differs from the customized integration.' }
-    }
-    finally { $zip.Dispose() }
+    $packager = Join-Path $script:RepoRoot 'tools/package_hacs_release.py'
+    & python $packager $stage $artifact
+    if ($LASTEXITCODE -ne 0) { throw 'Platform-independent HACS ZIP packaging/validation failed.' }
     Write-Output "HACS integration artifact created from official $($release.upstream_tag) baseline with $($release.runtime_overlay_paths.Count) inventoried runtime overlays (version $($manifest.version))."
     Get-FileHash -LiteralPath $artifact -Algorithm SHA256
 }
@@ -175,7 +170,15 @@ function Backup-NeonPlan {
 function Compare-NeonPlanRemote {
     $remote = Invoke-NeonPlanPlink "cd $script:RemotePath && find . -type f ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 | sort -z | xargs -0 sha256sum"
     $remoteMap = @{}
-    foreach ($line in $remote) { if ($line -match '^([0-9a-f]{64})\s+\*?(.*)$') { $remoteMap[$Matches[2].TrimStart('./')] = $Matches[1] } }
+    foreach ($line in $remote) {
+        # GNU sha256sum prefixes escaped filenames with a backslash and doubles
+        # embedded backslashes. Decode that representation without treating a
+        # real Linux backslash filename as a valid directory separator.
+        if ($line -match '^\\?([0-9a-f]{64})\s+\*?(.*)$') {
+            $name = $Matches[2].Replace('\\','\').TrimStart('./')
+            $remoteMap[$name] = $Matches[1]
+        }
+    }
     $drift = @()
     $releaseStage = Join-Path $script:RepoRoot '.local/neonplan3d-release-stage'
     $compareRoot = if (Test-Path -LiteralPath (Join-Path $releaseStage 'manifest.json')) { $releaseStage } else { $script:Integration }
