@@ -20,6 +20,18 @@
       "change": "Set downstream HACS version 4.0.2.1 (four-part version: upstream 4.0.2 plus TechPanda revision 1); reset/update this after each reviewed upstream merge.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
+      "change": "Regenerated from unchanged upstream frontend source to embed downstream version 4.0.2.1 and updated editor asset fingerprint.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+      "change": "Regenerated from unchanged upstream frontend source to embed downstream version 4.0.2.1 and corresponding bundle fingerprints.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
     }
   ],
   "custom_source_outside_runtime": "techpanda/furniture/",

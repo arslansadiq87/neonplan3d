@@ -61,8 +61,11 @@ function Get-NeonPlanDeployArtifact {
     Expand-Archive -LiteralPath $upstreamZip -DestinationPath $stage -Force
     $baseManifest = Get-Content -Raw -LiteralPath (Join-Path $stage 'manifest.json') | ConvertFrom-Json
     if ($baseManifest.version -ne $release.upstream_version) { throw "Downloaded baseline version $($baseManifest.version) does not match metadata $($release.upstream_version)." }
-    Copy-Item -LiteralPath (Join-Path $script:Integration 'packs.py') -Destination (Join-Path $stage 'packs.py') -Force
-    Copy-Item -LiteralPath (Join-Path $script:Integration 'manifest.json') -Destination (Join-Path $stage 'manifest.json') -Force
+    foreach ($relative in $release.runtime_overlay_paths) {
+        $sourceFile = Join-Path $script:Integration $relative
+        if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf)) { throw "Runtime overlay file is missing: $relative" }
+        Copy-Item -LiteralPath $sourceFile -Destination (Join-Path $stage $relative) -Force
+    }
     $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $artifact)
     if (Test-Path -LiteralPath $artifact) { Remove-Item -LiteralPath $artifact -Force }
     Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $artifact -CompressionLevel Optimal
@@ -73,7 +76,7 @@ function Get-NeonPlanDeployArtifact {
         if ($archiveFiles -ne @(Get-NeonPlanFiles $script:Integration).Count) { throw 'HACS archive file count differs from the customized integration.' }
     }
     finally { $zip.Dispose() }
-    Write-Output "HACS integration artifact created from official $($release.upstream_tag) baseline with only packs.py and manifest.json customized (version $($manifest.version))."
+    Write-Output "HACS integration artifact created from official $($release.upstream_tag) baseline with $($release.runtime_overlay_paths.Count) inventoried runtime overlays (version $($manifest.version))."
     Get-FileHash -LiteralPath $artifact -Algorithm SHA256
 }
 
