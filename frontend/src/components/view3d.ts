@@ -280,6 +280,7 @@ export class Fp3dView3d extends LitElement {
     wallMode: { attribute: false },
     explode: { type: Boolean },
     keepRoof: { attribute: false },
+    solarVisibility: { attribute: false },
     surroundings: { attribute: false },
     plain: { attribute: false },
     markerMode: { attribute: false },
@@ -426,6 +427,8 @@ export class Fp3dView3d extends LitElement {
   declare explode: boolean;
   /** The roof stays while zooming in (no lift, no fade). */
   declare keepRoof: boolean;
+  /** Property View only: whether native solar fields are shown. */
+  declare solarVisibility: boolean;
   /** Draw the surroundings from the map; false: this view leaves them out (a card option). */
   declare surroundings: boolean;
   /** A plain floor plan: walls, doors and stairs, no furniture (the devices stay). */
@@ -789,6 +792,7 @@ export class Fp3dView3d extends LitElement {
     this.wallMode = "auto";
     this.explode = true;
     this.keepRoof = false;
+    this.solarVisibility = true;
     this.surroundings = true;
     this.plain = false;
     this.markerMode = "important";
@@ -1110,6 +1114,7 @@ export class Fp3dView3d extends LitElement {
       this.viewer.setAutoOrbit(this.autoOrbit ? 0.06 : 0);
       this.viewer.setKeepRoof(this.keepRoof);
       this.viewer.setHideRoof(this.hideRoof);
+      this.viewer.setSolarVisibility(this.floorId === null && (this.building?.floors.length ?? 0) > 1 ? this.solarVisibility : true);
       this._low = this.viewer.low;
       this.viewer.setPacks([...getPacks()]);
       if (this.hass) void syncModules(this.hass, getPacks()).then(() => this.syncDevices(true));
@@ -1235,6 +1240,7 @@ export class Fp3dView3d extends LitElement {
     // a phone shows no floor pictures: none are drawn and the floors' labels keep the whole width
     if (changed.has("clean") || changed.has("_narrowStage")) this.scheduleThumbs();
     if (changed.has("floorId")) v.setFloor(this.floorId);
+    if (changed.has("floorId") || changed.has("solarVisibility") || changed.has("building")) v.setSolarVisibility(this.floorId === null && (this.building?.floors.length ?? 0) > 1 ? this.solarVisibility : true);
     if (changed.has("roomId") && (this.roomId || changed.get("roomId"))) v.selectRoom(this.roomId);
     if (changed.has("wallMode")) v.setWallMode(this.wallMode);
     if (changed.has("keepView")) v.setKeepView(this.keepView);

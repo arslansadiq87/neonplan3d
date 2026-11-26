@@ -17,19 +17,85 @@
     },
     {
       "path": "custom_components/neonplan3d/manifest.json",
-      "change": "Set downstream HACS version 4.0.2.1 (four-part version: upstream 4.0.2 plus TechPanda revision 1); reset/update this after each reviewed upstream merge.",
+      "change": "Set downstream HACS version 4.0.2.2 (four-part version: upstream 4.0.2 plus TechPanda revision 2); reset/update this after each reviewed upstream merge.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
     },
     {
       "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated from unchanged upstream frontend source to embed downstream version 4.0.2.1 and updated editor asset fingerprint.",
+      "change": "Regenerated to report downstream version 4.0.2.2 and load the TechPanda solar visibility implementation.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
     },
     {
       "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
-      "change": "Regenerated from unchanged upstream frontend source to embed downstream version 4.0.2.1 and corresponding bundle fingerprints.",
+      "change": "Regenerated for downstream version 4.0.2.2 and matching frontend asset fingerprints.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add a default-enabled Solar Panels control to the existing Show menu in multi-floor Property View and persist the device preference through the existing prefs store.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Forward the Property View solar preference to the viewer while forcing existing individual-floor behavior to remain enabled.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/i18n.ts",
+      "change": "Add German and English Solar Panels menu labels and hint text.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/build.ts",
+      "change": "Route existing garden and wall solar primitives into separate per-floor buffers rather than the merged walls/furniture buffers.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/roof.ts",
+      "change": "Route existing roof solar primitives into separate per-roof-part buffers using the native pushModules renderer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Add independently hideable batched solar layers for existing floor and roof geometry; preserve the native live overlay and position roof panels at each assigned roof part's floor elevation without roof zoom lift/fade.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/build.test.ts",
+      "change": "Assert floor-mounted solar buffers remain separate from walls, furniture and shared line geometry.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/roof.test.ts",
+      "change": "Assert native roof solar geometry is separated from roof body triangles and edge lines.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/screenshot.mjs",
+      "change": "Add deterministic Property View solar enabled/disabled preview shots and a preference reload assertion.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+      "change": "Regenerated native viewer bundle containing the independently toggleable solar geometry layers.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-card-editor.js",
+      "change": "Regenerated with synchronized frontend strings and downstream asset fingerprints.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
     }

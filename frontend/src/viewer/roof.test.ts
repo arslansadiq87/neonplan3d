@@ -24,6 +24,19 @@ test("the roof sits on the highest floor with rooms", () => {
   assert.equal(buildRoof(house("none")).length, 0);
 });
 
+test("roof solar is built once in a separate native visibility layer", () => {
+  const b = house("gable");
+  const face = roofFaces(b)[0];
+  const field = { id: "pv-upper", face: face.key, u: 1, v: 0.5, rows: 2, cols: 3, portrait: true };
+  const plain = buildRoof(b)[0];
+  b.settings.roof.solar = [field];
+  const withSolar = buildRoof(b)[0];
+  assert.ok(withSolar.solar && withSolar.solar.count > 0, "panel surfaces use the native module builder");
+  assert.ok(withSolar.solarLines && withSolar.solarLines.p.length > 0, "frames and cell lines are kept with the same visibility layer");
+  assert.equal(withSolar.solid.count, plain.solid.count, "solar triangles are not merged into the roof body");
+  assert.equal(withSolar.lines.p.length, plain.lines.p.length, "solar edges are not merged into the roof edges");
+});
+
 test("a gable roof rises to half the house depth times the slope", () => {
   const roof = buildRoof(house("gable"))[0];
   const p = roof.solid.p;

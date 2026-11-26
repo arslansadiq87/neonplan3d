@@ -77,6 +77,9 @@ export interface FloorGeometry {
   holes: Vec2[][];
   /** Walls (with folding upper parts) and furniture. */
   walls: BufferGeometry;
+  /** Native solar modules on this floor; kept separate so the property-view Show menu can toggle them without rebuilding. */
+  solar: BufferGeometry;
+  solarLines: BufferGeometry;
   /** Water surfaces of pools (see-through: the basin shows below). */
   water: BufferGeometry;
   lines: BufferGeometry;
@@ -701,9 +704,11 @@ export function buildFloorGeometry(
   // ---------------------------------------------------------------- furniture and shadows
   const shadow = buildShadow(outline.edges, floor.rooms, spans);
   const waterBuf = new GeoBuffer();
+  const solarBuf = new GeoBuffer();
+  const solarLines = new LineBuffer();
   pushOutdoor(wallBuf, lines, floor, waterBuf);
   if (surroundings) pushSurroundings(wallBuf, lines, surroundings, groundLevel(floor) + surroundings.y);
-  for (const s of solar) pushModules(wallBuf, lines, s.face, s.field, floor.elevation);
+  for (const s of solar) pushModules(solarBuf, solarLines, s.face, s.field, floor.elevation);
 
   // lamps are drawn live by the viewer (they glow with their light)
   const furnitureTris: FloorGeometry["furnitureTris"] = [];
@@ -733,6 +738,8 @@ export function buildFloorGeometry(
     roomTris,
     holes: cutHoles,
     walls: wallBuf.geometry(),
+    solar: solarBuf.geometry(),
+    solarLines: solarLines.geometry(),
     water: waterBuf.geometry(),
     lines: lines.geometry(),
     shadow: shadow.geometry(),

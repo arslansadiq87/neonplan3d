@@ -52,6 +52,9 @@ export interface RoofGeometry {
   base: number;
   solid: GeoBuffer;
   lines: LineBuffer;
+  /** Native roof solar modules, separate for immediate visibility control. */
+  solar?: GeoBuffer;
+  solarLines?: LineBuffer;
   /** See-through roof panels of canopies (drawn with their own, fainter material). */
   glass: GeoBuffer;
   /** Roof sections in this part (sections roof only). */
@@ -179,7 +182,11 @@ function pushSolar(b: Building, parts: RoofGeometry[]): void {
     if (!face) continue;
     const part = face.section ? parts.find((p) => p.sections?.includes(face.section!)) : parts[0];
     // faces have heights above the ground; parts count from their floor's level plus their base
-    if (part) pushModules(part.solid, part.lines, face, field, part.floor.elevation + part.base);
+    if (part) {
+      part.solar ??= new GeoBuffer();
+      part.solarLines ??= new LineBuffer();
+      pushModules(part.solar, part.solarLines, face, field, part.floor.elevation + part.base);
+    }
   }
 }
 

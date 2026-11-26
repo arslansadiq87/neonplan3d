@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { BufferGeometry } from "three";
-import type { Floor, Furniture, Opening, Room, Vec2 } from "../model.ts";
-import { newFloor, pointInPolygon, stairsULayout } from "../model.ts";
+import type { Floor, Furniture, Opening, Room, SolarField, Vec2 } from "../model.ts";
+import { emptyBuilding, newFloor, pointInPolygon, stairsULayout } from "../model.ts";
 import { generateWalls } from "../geometry/walls.ts";
 import { buildFloorGeometry, clipAlong, facingGroups, packStairHole, stairHoles, stairHoleParts, wallHeight } from "./build.ts";
 import { setNaturalPalette } from "./palette.ts";
 import type { PackItem } from "../packs.ts";
+import { groundFace } from "../solar.ts";
 
 const EXT = 0.24;
 const INT = 0.12;
@@ -37,6 +38,19 @@ function segments(g: BufferGeometry): number[][] {
 const vertical = (s: number[]) => Math.abs(s[0] - s[3]) < 1e-9 && Math.abs(s[2] - s[5]) < 1e-9;
 const atY = (s: number[], y: number) => Math.abs(s[1] - y) < 1e-6 && Math.abs(s[4] - y) < 1e-6;
 const length = (s: number[]) => Math.hypot(s[3] - s[0], s[4] - s[1], s[5] - s[2]);
+
+test("floor-mounted solar uses a separate visibility layer without changing native furniture/walls", () => {
+  const floor = { ...floorWith([rect("a", 0, 0, 8, 6)]), elevation: 3.35 };
+  const building = emptyBuilding();
+  building.floors = [floor];
+  const field: SolarField = { id: "yard", face: "ground", u: 9, v: 0, rows: 1, cols: 2, portrait: true, tilt: 25 };
+  const plain = buildFloorGeometry(floor, EXT, INT);
+  const geo = buildFloorGeometry(floor, EXT, INT, [], [{ face: groundFace(building, field), field }]);
+  assert.ok(geo.solar.getAttribute("position").count > 0, "native panels remain rendered");
+  assert.ok(geo.solarLines.getAttribute("position").count > 0, "panel frame/cell lines remain rendered");
+  assert.equal(geo.walls.getAttribute("position").count, plain.walls.getAttribute("position").count, "solar is not duplicated in merged walls/furniture");
+  assert.equal(geo.lines.getAttribute("position").count, plain.lines.getAttribute("position").count, "solar lines are independently toggled");
+});
 
 /** Total area of a triangle soup in the x/z plane. */
 function area(g: BufferGeometry): number {

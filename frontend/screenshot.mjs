@@ -242,6 +242,8 @@ const shots = [
   // the cables meet at a hub set by hand, the inverter's cable ends at the grid point (#841)
   { name: "editor-energy-hub", query: "?flows&lang=en", width: 1500, height: 1000, editor: true, editorScript: "e._tool = 'energy'; e._floorId = 'eg'; e._solarId = null; setTimeout(() => { const inv = e._doc.floors[0].furniture.find((m) => m.type === 'inverter'); e.change((d) => { d.energy.meter = { floor_id: 'eg', x: 6, z: 4 }; d.energy.hub_point = true; d.floors[0].furniture.find((m) => m.id === inv.id).cable_to = 'grid'; }); e.fit(); setTimeout(() => [...e.renderRoot.querySelectorAll('.fp3d-check')].find((x) => x.textContent.includes('point of their own'))?.scrollIntoView({ block: 'center' }), 300); }, 400);", afterWait: 1800 },
   { name: "view-solar-live", query: "?flows&pv=5400", width: 1280, height: 800, editor: true, editorScript: "e.fit();", then3d: "Alle Etagen", then3dAlso: ["Gestapelt"], camera: { theta: 1.1, phi: 0.9, radius: 26 } },
+  { name: "view-property-solar-on", query: "", width: 1280, height: 800, editor: true, editorScript: "e._doc.settings.roof.windows = []; e.setDoc(structuredClone(e._doc)); e.fit();", then3d: "Alle Etagen", then3dAlso: ["Gestapelt"], viewScript: "const t = setInterval(() => { const w = document.querySelector('neonplan3d-panel')?.shadowRoot?.querySelector('fp3d-view3d'); if (!w) return; clearInterval(t); const p = w.getRootNode().host; p._solarPanels = true; p._showOpen = true; p.requestUpdate(); }, 100);", camera: { theta: 1.1, phi: 0.9, radius: 26 } },
+  { name: "view-property-solar-off", query: "", width: 1280, height: 800, editor: true, editorScript: "e._doc.settings.roof.windows = []; e.setDoc(structuredClone(e._doc)); e.fit();", then3d: "Alle Etagen", then3dAlso: ["Gestapelt"], viewScript: "const t = setInterval(() => { const w = document.querySelector('neonplan3d-panel')?.shadowRoot?.querySelector('fp3d-view3d'); if (!w) return; clearInterval(t); const p = w.getRootNode().host; p._showOpen = true; p.requestUpdate(); setTimeout(() => [...p.renderRoot.querySelectorAll('button')].find((b) => b.textContent.includes('Solarmodule'))?.click(), 80); }, 100);", camera: { theta: 1.1, phi: 0.9, radius: 26 }, reloadCheck: false },
   { name: "view-flows-eg", query: "?flows", width: 1280, height: 800, editor: true, editorScript: "e.fit();", then3d: "Erdgeschoss", camera: { theta: 0.25, phi: 1.2, radius: 11 } },
   { name: "view-flows-room", query: "?flows", width: 1280, height: 800, click: "Erdgeschoss", then: "Garage" },
   { name: "view-flows-back", query: "?flows", width: 1280, height: 800, editor: true, editorScript: "e.fit();", then3d: "Alle Etagen", then3dAlso: ["Gestapelt"], camera: { theta: 2.6, phi: 1.1, radius: 18 } },
@@ -509,8 +511,24 @@ const errors = [];
 const only = process.env.SHOTS?.split(",");
 for (const shot of shots.filter((s) => !only || only.includes(s.name))) {
   const page = await browser.newPage();
+  const optional404s = new Set();
+  const optionalPreviewPaths = new Set(["/favicon.ico", "/private/packs/starter.json", "/private/packs/src/index.json"]);
   page.on("pageerror", (e) => errors.push(`${shot.name}: ${e.message}`));
-  page.on("console", (m) => m.type() === "error" && !m.location()?.url?.endsWith("favicon.ico") && errors.push(`${shot.name}: ${m.text()}`));
+  page.on("response", (r) => {
+    if (r.status() === 404 && optionalPreviewPaths.has(new URL(r.url()).pathname)) {
+      optional404s.add(new URL(r.url()).pathname);
+      if (process.env.TRACE_HTTP_ERRORS) console.warn(`Optional preview resource absent: ${new URL(r.url()).pathname}`);
+    } else if (r.status() >= 400 && process.env.TRACE_HTTP_ERRORS) console.warn(`HTTP ${r.status()} ${r.url()}`);
+  });
+  page.on("console", (m) => {
+    if (m.type() !== "error" || m.location()?.url?.endsWith("favicon.ico")) return;
+    const optional = [...optional404s].find((path) => m.text().includes("Failed to load resource"));
+    if (optional) {
+      optional404s.delete(optional);
+      return;
+    }
+    errors.push(`${shot.name}: ${m.text()}`);
+  });
   await page.setViewport({ width: shot.width, height: shot.height, deviceScaleFactor: 1 });
   // every shot starts with the default settings (the panel remembers quality and FPS per device)
   // (only on the first load of the tab, so a reload keeps what the page stored)
@@ -715,6 +733,17 @@ for (const shot of shots.filter((s) => !only || only.includes(s.name))) {
     await new Promise((r) => setTimeout(r, 300));
   }
   await page.screenshot({ path: join(outDir, `${shot.name}.png`) });
+  if (shot.reloadCheck !== undefined) {
+    await page.reload({ waitUntil: "networkidle0", timeout: 120000 });
+    await new Promise((r) => setTimeout(r, 1200));
+    const persisted = await page.evaluate(() => {
+      const panel = document.querySelector("neonplan3d-panel");
+      const view = panel?.shadowRoot?.querySelector("fp3d-view3d");
+      return { preference: panel?._solarPanels, viewer: view?.viewer?.solarVisibility };
+    });
+    console.log(`RELOAD_CHECK ${shot.name}: ${JSON.stringify(persisted)}`);
+    if (persisted.preference !== shot.reloadCheck || persisted.viewer !== shot.reloadCheck) errors.push(`${shot.name}: solar visibility preference did not persist after reload`);
+  }
   await page.close();
   console.log(`saved ${shot.name}.png`);
 }

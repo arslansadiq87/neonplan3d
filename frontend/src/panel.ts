@@ -91,6 +91,7 @@ export class Floorplan3dPanel extends LitElement {
     _wallMode: { state: true },
     _explode: { state: true },
     _keepRoof: { state: true },
+    _solarPanels: { state: true },
     _plain: { state: true },
     _roomBar: { state: true },
     _quality: { state: true },
@@ -166,6 +167,7 @@ export class Floorplan3dPanel extends LitElement {
   private declare _wallMode: WallMode;
   private declare _explode: boolean;
   private declare _keepRoof: boolean;
+  private declare _solarPanels: boolean;
   /** The plain floor plan without furniture, remembered on this device. */
   private declare _plain: boolean;
   /** The room bar at the bottom: off, the rooms, or the favourites and the rooms – remembered on this device. */
@@ -262,6 +264,7 @@ export class Floorplan3dPanel extends LitElement {
     this._wallMode = prefs.get("walls") === "cut" ? "cut" : "auto";
     this._explode = prefs.get("explode") !== "0";
     this._keepRoof = prefs.get("roof") === "1";
+    this._solarPanels = prefs.get("solar_panels") !== "0";
     this._plain = prefs.get("plain") === "1";
     const bar = prefs.get("roombar");
     this._roomBar = bar === "rooms" || bar === "all" ? bar : "off";
@@ -1373,6 +1376,7 @@ export class Floorplan3dPanel extends LitElement {
           .wallMode=${this._wallMode}
           .explode=${this._explode}
           .keepRoof=${this._keepRoof}
+          .solarVisibility=${this._floorId === null ? this._solarPanels : true}
           .plain=${this._plain}
           .markerMode=${this._markers}
           .pinSize=${this._pinSize}
@@ -1495,6 +1499,19 @@ export class Floorplan3dPanel extends LitElement {
             ? html`<div class="fp3d-seg">
                 <button aria-pressed=${this._keepRoof} title=${this.t("roof_keep_hint")} @click=${() => this.setKeepRoof(!this._keepRoof)}>${this.t("roof_keep")}</button>
               </div>`
+            : nothing}
+          ${b.floors.length > 1 && !this._floorId
+            ? html`<button
+                class="fp3d-chip"
+                aria-pressed=${this._solarPanels}
+                title=${this.t("solar_panels_hint")}
+                @click=${() => {
+                  this._solarPanels = !this._solarPanels;
+                  prefs.set("solar_panels", this._solarPanels ? "1" : "0");
+                }}
+              >
+                ☼ ${this.t("solar_panels")}
+              </button>`
             : nothing}
           ${b.floors.length > 1 && this._floorId
             ? html`<div class="fp3d-seg" role="group" aria-label=${this.t("card_floor_stack")}>
