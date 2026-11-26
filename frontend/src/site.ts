@@ -3,8 +3,9 @@
 // Floors at the same height are drawn as one (the garden house's ground floor beside the house's). Read only: a tap
 // on a room maps back to its plan and room.
 import type { PlanSite } from "./api.ts";
-import type { Building, Floor, RoofSection, Vec2 } from "./model.ts";
+import { outdoorGround, type Building, type Floor, type RoofSection, type SolarField, type SolarString, type Vec2 } from "./model.ts";
 import { roofSectionsFromRooms, turnSectionAbout } from "./roof-sections.ts";
+import { groundFloor, wallFaces } from "./solar.ts";
 
 /** The separator between a plan's id and the id of one of its pieces in the property view. */
 export const SITE_SEP = ":";
@@ -83,6 +84,75 @@ export function placeSection(sec: RoofSection, plan: string, site: PlanSite): Ro
   };
 }
 
+/** A solar field's references and placement after its plan is moved into the property. */
+function placeSolarField(
+  field: SolarField,
+  plan: SitePlan,
+  sourceSections: readonly RoofSection[],
+  placedSections: readonly RoofSection[],
+  target: Building,
+): SolarField {
+  const { id, building, site } = plan;
+  const roof = building.settings.roof;
+  let face = field.face;
+  let u = field.u;
+  let v = field.v;
+  let rotation = field.rotation;
+  let base = field.base;
+  let siteFloorId: string | undefined;
+  if (face === "ground") {
+    const sourceFloor = groundFloor(building);
+    const targetFloor = groundFloor(target);
+    siteFloorId = sourceFloor ? target.floors.find((floor) => Math.abs(floor.elevation - sourceFloor.elevation) < SAME_LEVEL)?.id : undefined;
+    const sourceGround = field.base ?? (sourceFloor ? outdoorGround(sourceFloor, u, v) : 0);
+    [u, v] = placePoint([u, v], site!);
+    rotation = (((rotation ?? 0) + site!.rot) % 360 + 360) % 360;
+    base = sourceGround + (sourceFloor?.elevation ?? 0) - (targetFloor?.elevation ?? 0);
+  } else if (face.startsWith("wall:")) {
+    const sourceFace = wallFaces(building).find((candidate) => candidate.key === face);
+    if (sourceFace?.wall) {
+      const floorId = `${id}${SITE_SEP}${sourceFace.wall.floorId}`;
+      const [x, z] = placePoint([sourceFace.o[0], sourceFace.o[2]], site!);
+      const angle = (site!.rot * Math.PI) / 180;
+      const eu: Vec2 = [sourceFace.eu[0] * Math.cos(angle) - sourceFace.eu[2] * Math.sin(angle), sourceFace.eu[0] * Math.sin(angle) + sourceFace.eu[2] * Math.cos(angle)];
+      const placedFace = wallFaces(target, floorId).find(
+        (candidate) =>
+          candidate.wall?.floorId === floorId &&
+          Math.hypot(candidate.o[0] - x, candidate.o[2] - z) < 0.01 &&
+          Math.hypot(candidate.eu[0] - eu[0], candidate.eu[2] - eu[1]) < 0.001 &&
+          Math.abs(candidate.lu - sourceFace.lu) < 0.01,
+      );
+      if (placedFace) face = placedFace.key;
+    }
+  } else {
+    const single = roof.type !== "custom" && roof.type !== undefined;
+    if (single && sourceSections[0] && placedSections[0] && face.startsWith("main:")) {
+      face = `${placedSections[0].id}:${face.slice(5)}`;
+    } else {
+      face = `${id}${SITE_SEP}${face}`;
+    }
+  }
+  return {
+    ...field,
+    id: `${id}${SITE_SEP}${field.id}`,
+    face,
+    u,
+    v,
+    ...(rotation === undefined ? {} : { rotation }),
+    ...(base === undefined ? {} : { base }),
+    ...(face === "ground" && siteFloorId ? { siteFloorId } : {}),
+    ...(field.string ? { string: `${id}${SITE_SEP}${field.string}` } : {}),
+  };
+}
+
+function placeSolarString(string: SolarString, plan: string): SolarString {
+  return {
+    ...string,
+    id: `${plan}${SITE_SEP}${string.id}`,
+    ...(string.inverter ? { inverter: `${plan}${SITE_SEP}${string.inverter}` } : {}),
+  };
+}
+
 /**
  * The property as one building: the main plan as it is, every plan standing on it (`site.on`) placed beside it.
  * A floor of another plan joins the main plan's floor at its height, else it is a floor of its own.
@@ -114,9 +184,26 @@ export function composeSite(main: Building, others: readonly SitePlan[]): Buildi
   const hasRooms = (b: Building) => b.floors.some((f) => f.rooms.some((r) => r.points.length >= 3));
   const own = hasRooms(main) ? roofSectionsOf(main) : [];
   const single = main.settings.roof.type !== "custom" && main.settings.roof.type !== undefined;
-  const solar = (main.settings.roof.solar ?? []).map((f) => (single && own[0] && f.face.startsWith("main:") ? { ...f, face: `${own[0].id}:${f.face.slice(5)}` } : f));
-  const sections = [...own, ...others.filter((p) => p.site?.on && hasRooms(p.building)).flatMap((p) => roofSectionsOf(p.building).map((x) => placeSection(x, p.id, p.site!)))];
-  const roof = { ...main.settings.roof, type: "custom" as const, sections, solar };
+  const mainSolar = (main.settings.roof.solar ?? []).map((f) => (single && own[0] && f.face.startsWith("main:") ? { ...f, face: `${own[0].id}:${f.face.slice(5)}` } : f));
+  const propertyPlans = others.filter((p) => p.site?.on && hasRooms(p.building));
+  const sectionsByPlan = propertyPlans.map((p) => ({
+    plan: p,
+    source: roofSectionsOf(p.building),
+    placed: roofSectionsOf(p.building).map((x) => placeSection(x, p.id, p.site!)),
+  }));
+  const sections = [...own, ...sectionsByPlan.flatMap((x) => x.placed)];
+  const targetWalls = { ...main, floors };
+  const solar = [
+    ...mainSolar,
+    ...sectionsByPlan.flatMap(({ plan, source, placed }) =>
+      (plan.building.settings.roof.solar ?? []).map((field) => placeSolarField(field, plan, source, placed, targetWalls)),
+    ),
+  ];
+  const strings = [
+    ...(main.settings.roof.strings ?? []),
+    ...propertyPlans.flatMap((p) => (p.building.settings.roof.strings ?? []).map((string) => placeSolarString(string, p.id))),
+  ];
+  const roof = { ...main.settings.roof, type: "custom" as const, sections, solar, strings };
   // the property has no house start view (it would frame the main house only) and no card templates of its own
   return { ...main, floors, card_templates: [], settings: { ...main.settings, start_view: null, roof } };
 }

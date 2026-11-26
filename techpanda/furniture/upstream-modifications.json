@@ -12,12 +12,16 @@
     {
       "path": "custom_components/neonplan3d/packs.py",
       "change": "Add TechPanda Ed25519 public key 4d62b4e84557 to PACK_PUBLIC_KEYS and the same id to STUDIO_KEYS, restricting it to studio.* furniture-only packs with no Pro features or executable module.",
-      "official_keys_preserved": ["62863e45df5a", "867371cc70e6", "bdac241ae58b"],
+      "official_keys_preserved": [
+        "62863e45df5a",
+        "867371cc70e6",
+        "bdac241ae58b"
+      ],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
     {
       "path": "custom_components/neonplan3d/manifest.json",
-      "change": "Set downstream HACS version 4.0.2.2 (four-part version: upstream 4.0.2 plus TechPanda revision 2); reset/update this after each reviewed upstream merge.",
+      "change": "Set downstream HACS version 4.0.2.3 (four-part version: upstream 4.0.2 plus TechPanda revision 3); reset/update this after each reviewed upstream merge.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
     },
@@ -65,7 +69,7 @@
     },
     {
       "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Add independently hideable batched solar layers for existing floor and roof geometry; preserve the native live overlay and position roof panels at each assigned roof part's floor elevation without roof zoom lift/fade.",
+      "change": "Add independently hideable batched solar layers and route composed ground-face arrays to their source plan floor; preserve native live overlays and keep solar placement independent of roof lift/fade.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -98,6 +102,24 @@
       "change": "Regenerated with synchronized frontend strings and downstream asset fingerprints.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "frontend/src/site.ts",
+      "change": "Compose secondary site-plan solar fields and strings into read-only Property View, transform their placement and references, and retain a runtime floor association for ground-face arrays.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/model.ts",
+      "change": "Add optional runtime-only siteFloorId metadata to SolarField for Property View floor routing; it is not persisted in plan storage.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/site.test.ts",
+      "change": "Cover secondary roof-field composition and live bindings, plus site-transformed ground-array position, rotation, elevation and native floor-geometry generation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }
   ],
   "custom_source_outside_runtime": "techpanda/furniture/",

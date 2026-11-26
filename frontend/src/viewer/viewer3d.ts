@@ -3216,7 +3216,9 @@ export class FloorplanViewer {
     for (const floor of b.floors) {
       // solar fields in the garden stand on the ground floor, wall fields hang on their floor's walls
       const fields = b.settings.roof?.solar ?? [];
-      const garden = groundFloor(b)?.id === floor.id ? fields.filter((f) => f.face === GROUND).map((field) => ({ field, face: groundFace(b, field) })) : [];
+      const garden = fields
+        .filter((field) => field.face === GROUND && (field.siteFloorId ?? groundFloor(b)?.id) === floor.id)
+        .map((field) => ({ field, face: groundFace(b, field) }));
       const onWalls = fields.filter((f) => f.face.startsWith(`wall:${floor.id}:`));
       if (onWalls.length) {
         const walls = new Map(wallFaces(b, floor.id).map((w) => [w.key, w]));

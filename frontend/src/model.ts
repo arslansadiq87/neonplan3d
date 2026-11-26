@@ -577,6 +577,8 @@ export interface RoofSettings {
  */
 export interface SolarField {
   id: string;
+  /** Runtime-only floor association set while composing plans for the read-only property view. Never stored. */
+  siteFloorId?: string;
   /** Roof face: "main:a" / "main:b" / "main:top" (single roof) or "<section id>:a" / ":b" / ":top"; hip ends ":c" / ":d". */
   face: string;
   u: number;

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { emptyBuilding, newFloor, type Building } from "./model.ts";
 import { composeSite, placePoint, siteOwner } from "./site.ts";
+import { groundFace, roofFaces } from "./solar.ts";
+import { buildFloorGeometry } from "./viewer/build.ts";
 
 function house(): Building {
   const eg = newFloor("eg", "EG", 0);
@@ -86,6 +88,48 @@ test("every building keeps its own roof: both become sections, the garden house'
   g.settings.roof = { ...g.settings.roof, type: "none" };
   const none = composeSite(h, [{ id: "pgarten", building: g, site: { on: true, x: 12, y: 8, rot: 90 } }]);
   assert.ok((none.settings.roof.sections ?? []).every((x) => !x.id.startsWith("pgarten:")));
+});
+
+test("Property View carries a secondary plan's roof solar field onto its placed roof and keeps live string bindings", () => {
+  const main = house();
+  main.settings.roof = { ...main.settings.roof, type: "custom", sections: [{ id: "main_roof", x0: 0, z0: 0, x1: 6, z1: 4, shape: "gable", axis: "x", eave_a: 2.5, eave_b: 2.5, pitch_a: 30, pitch_b: 30, base: 2.5 }] };
+  const side = garden();
+  side.settings.roof = {
+    ...side.settings.roof,
+    type: "custom",
+    sections: [{ id: "workshop_roof", x0: 0, z0: 0, x1: 4, z1: 3, shape: "gable", axis: "x", eave_a: 2.5, eave_b: 2.5, pitch_a: 30, pitch_b: 30, base: 2.5 }],
+    solar: [{ id: "array", face: "workshop_roof:a", u: 0.2, v: 0.2, rows: 1, cols: 2, portrait: true, string: "string" }],
+    strings: [{ id: "string", name: "Roof array", entity: "sensor.solar_power", inverter: "inverter" }],
+  };
+  const result = composeSite(main, [{ id: "pgarten", building: side, site: { on: true, x: 12, y: 8, rot: 90 } }]);
+  const field = result.settings.roof.solar?.find((x) => x.id === "pgarten:array");
+  assert.ok(field, "secondary-plan solar fields are retained in the property roof");
+  assert.equal(field.face, "pgarten:workshop_roof:a", "the field follows its placed roof section");
+  assert.equal(field.string, "pgarten:string");
+  assert.deepEqual(result.settings.roof.strings?.find((x) => x.id === "pgarten:string"), {
+    id: "pgarten:string",
+    name: "Roof array",
+    entity: "sensor.solar_power",
+    inverter: "pgarten:inverter",
+  });
+  const face = roofFaces(result).find((x) => x.key === field.face);
+  assert.ok(face, "the remapped face resolves for the native roof solar renderer");
+});
+
+test("Property View preserves a secondary plan's ground-face rooftop array position, rotation and floor-relative height", () => {
+  const main = house();
+  const side = garden();
+  side.floors[0].elevation = 2.75;
+  side.settings.roof.solar = [{ id: "array", face: "ground", u: 1, v: 2, base: 3.2, rotation: 0, rows: 1, cols: 2, portrait: true }];
+  const result = composeSite(main, [{ id: "pgarten", building: side, site: { on: true, x: 12, y: 8, rot: 90 } }]);
+  const field = result.settings.roof.solar?.find((x) => x.id === "pgarten:array");
+  assert.ok(field);
+  assert.equal(field.face, "ground");
+  assert.deepEqual([field.u, field.v, field.rotation, field.base], [10, 9, 90, 5.95]);
+  assert.equal(field.siteFloorId, "og", "the array follows the source plan's elevation group when floors are apart");
+  const floor = result.floors.find((x) => x.id === field.siteFloorId)!;
+  const geometry = buildFloorGeometry(floor, result.settings.wall_exterior, result.settings.wall_interior, [], [{ field, face: groundFace(result, field) }]);
+  assert.ok(geometry.solar.getAttribute("position").count > 0, "native floor geometry contains the secondary rooftop array");
 });
 
 test("a building without rooms brings no roof to the property: sections left from deleted rooms stay out (#986)", () => {
