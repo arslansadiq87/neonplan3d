@@ -1,4 +1,7 @@
 node_modules/
+.local/
+techpanda/furniture/dist/
+techpanda/dist/
 __pycache__/
 *.pyc
 .pytest_cache/

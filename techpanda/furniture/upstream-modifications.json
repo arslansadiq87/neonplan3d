@@ -1,0 +1,22 @@
+{
+  "upstream": "Mastershort/neonplan3d",
+  "baseline_tag": "v4.0.2",
+  "baseline_commit": "503bcb368ba06cd8e31e2df6da1a1000158cf275",
+  "custom_upstream_file_changes": [
+    {
+      "path": ".gitignore",
+      "change": "Ignore local integration backups and generated furniture pack/preview output so secrets and local artifacts are not staged accidentally. No upstream runtime behavior changes.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/packs.py",
+      "change": "Add TechPanda Ed25519 public key 4d62b4e84557 to PACK_PUBLIC_KEYS and the same id to STUDIO_KEYS, restricting it to studio.* furniture-only packs with no Pro features or executable module.",
+      "official_keys_preserved": ["62863e45df5a", "867371cc70e6", "bdac241ae58b"],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    }
+  ],
+  "custom_source_outside_runtime": "techpanda/furniture/",
+  "private_key_location": "%USERPROFILE%/Documents/TechPanda/NeonPlan3D/keys/techpanda-ed25519.pem",
+  "private_key_in_repo": false
+}

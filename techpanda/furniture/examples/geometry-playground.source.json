@@ -1,0 +1,34 @@
+{
+  "format": "fp3dpack",
+  "version": 1,
+  "id": "studio.techpanda.geometry_playground",
+  "name": "TechPanda geometry playground",
+  "publisher": "TechPanda",
+  "licensee": null,
+  "release": 1,
+  "instance": null,
+  "description": "Local authoring and preview fixture for native furniture pack primitives.",
+  "features": [],
+  "items": [
+    {
+      "id": "shape_demo",
+      "name": { "en": "Shape demo" },
+      "size": [1.0, 0.8, 0.9],
+      "mount": "floor",
+      "parts": [
+        { "shape": "cyl", "x": 0, "z": 0, "w": 0.88, "d": 0.88, "y": 0.05, "h": 0.75, "color": "#dce4eb", "top": "#f4f7fa", "edges": true },
+        { "shape": "loft", "x": 0, "z": 0, "w": 0.88, "d": 0.88, "y": 0.8, "h": 0.12, "color": "#c3ccd5", "top": "#eef2f5", "tx": 0, "tz": 0, "tw": 0.78, "td": 0.78, "edges": true },
+        { "shape": "box", "x": 0, "z": 0, "w": 0.5, "d": 0.5, "y": 0.12, "h": 0.35, "color": "#32a9df", "bind": { "slot": "level", "kind": "level" } },
+        { "shape": "box", "x": 0.38, "z": 0, "w": 0.12, "d": 0.3, "y": 0.18, "h": 0.2, "color": "metal", "rot": 25 }
+      ],
+      "slots": [
+        { "id": "level", "name": { "en": "Water level" }, "domains": ["sensor"] }
+      ],
+      "symbol": [
+        { "shape": "circle", "x": 0, "z": 0, "r": 0.44 }
+      ],
+      "group": "storage",
+      "tags": ["tank", "geometry", "level"]
+    }
+  ]
+}

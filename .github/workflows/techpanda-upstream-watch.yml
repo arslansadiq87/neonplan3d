@@ -1,0 +1,39 @@
+name: TechPanda upstream release watch
+
+on:
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find newest upstream stable release
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api repos/Mastershort/neonplan3d/releases --paginate --jq '[.[] | select(.draft == false and .prerelease == false and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))] | sort_by(.published_at) | last | .tag_name')
+          if [ -z "$latest" ] || [ "$latest" = null ]; then
+            echo "No stable upstream release found" >&2
+            exit 1
+          fi
+          echo "tag=$latest" >> "$GITHUB_OUTPUT"
+          echo "Latest official stable release: $latest"
+      - name: Report when downstream review is due
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ steps.upstream.outputs.tag }}
+        run: |
+          current=$(gh api repos/${GITHUB_REPOSITORY}/contents/custom_components/neonplan3d/manifest.json --jq '.content' | base64 -d | jq -r .version)
+          echo "Downstream manifest version: $current"
+          echo "Latest official tag: $LATEST"
+          if [ "v$current" != "$LATEST" ]; then
+            echo "Upstream update review required. Run scripts/Update-NeonPlanUpstream.ps1 locally; this workflow does not merge, publish, or deploy."
+          else
+            echo "No upstream version change detected."
+          fi

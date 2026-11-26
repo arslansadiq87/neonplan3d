@@ -1,0 +1,27 @@
+{
+  "status": "rectangular design complete; cylindrical sibling not implemented",
+  "source": "techpanda/furniture/packs/water-tanks.source.json",
+  "pack_id": "studio.techpanda.water_tanks",
+  "item_id": "rectangular_water_tank",
+  "name": "Rectangular Water Tank",
+  "dimensions_m": {
+    "width": 2.0,
+    "depth": 1.5,
+    "height": 1.5
+  },
+  "default_mount_y_m": 0,
+  "color": {
+    "body": "#41474e",
+    "cover": "#555c64",
+    "water": "#238bc3",
+    "finish_role": "body"
+  },
+  "features": ["raised cover", "round inspection hatch", "inlet", "outlet", "front level window", "support rails"],
+  "water_level": {
+    "optional_sensor_slot": "level",
+    "compatible_domains": ["sensor"],
+    "live_binding": "level",
+    "pump_control": false
+  },
+  "future_pack_extension": "Add a separate cylindrical item to the same pack's items array."
+}
