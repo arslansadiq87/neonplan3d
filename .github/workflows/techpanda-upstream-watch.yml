@@ -29,10 +29,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           LATEST: ${{ steps.upstream.outputs.tag }}
         run: |
-          current=$(gh api repos/${GITHUB_REPOSITORY}/contents/custom_components/neonplan3d/manifest.json --jq '.content' | base64 -d | jq -r .version)
-          echo "Downstream manifest version: $current"
+          current=$(gh api repos/${GITHUB_REPOSITORY}/contents/techpanda/release.json --jq '.content' | base64 -d | jq -r .upstream_tag)
+          echo "Tracked upstream baseline: $current"
           echo "Latest official tag: $LATEST"
-          if [ "v$current" != "$LATEST" ]; then
+          if [ "$current" != "$LATEST" ]; then
             echo "Upstream update review required. Run scripts/Update-NeonPlanUpstream.ps1 locally; this workflow does not merge, publish, or deploy."
           else
             echo "No upstream version change detected."

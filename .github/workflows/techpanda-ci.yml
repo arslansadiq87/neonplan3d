@@ -1,0 +1,54 @@
+name: TechPanda CI
+
+on:
+  push:
+    branches: [techpanda-custom]
+  pull_request:
+    branches: [techpanda-custom]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+        env:
+          TZ: UTC
+      - run: npm run build
+      - name: Committed frontend bundles are current
+        run: git diff --exit-code -- custom_components/neonplan3d/frontend
+        working-directory: .
+      - name: Test TechPanda tank geometry
+        run: node --test techpanda/furniture/water-tank.test.ts
+        working-directory: .
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements_test.txt ruff mypy
+      - run: ruff check custom_components tests
+      - run: ruff format --check custom_components tests
+      - run: mypy custom_components/neonplan3d
+      - run: pytest -q
+      - run: python techpanda/furniture/verify_registry.py --upstream-tag v4.0.2

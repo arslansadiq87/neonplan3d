@@ -1,0 +1,11 @@
+{
+  "upstream": "Mastershort/neonplan3d",
+  "upstream_tag": "v4.0.2",
+  "upstream_version": "4.0.2",
+  "downstream_owner": "arslansadiq87",
+  "downstream_repository": "neonplan3d",
+  "downstream_branch": "techpanda-custom",
+  "downstream_version": "4.0.2.1",
+  "release_tag": "v4.0.2.1",
+  "release_status": "prepared-not-published"
+}

@@ -24,6 +24,23 @@ try {
     git merge --no-ff --no-edit $ReleaseTag
     if ($LASTEXITCODE) { throw 'Merge failed or has conflicts. Resolve conflicts, then run registry verification, build, and tests.' }
 
+    $upstreamVersion = $ReleaseTag.Substring(1)
+    $downstreamVersion = "$upstreamVersion.1"
+    $downstreamTag = "v$downstreamVersion"
+    $manifestPath = Join-Path $root 'custom_components/neonplan3d/manifest.json'
+    $manifestText = [IO.File]::ReadAllText($manifestPath)
+    $manifestText = [regex]::Replace($manifestText, '"version"\s*:\s*"[^"]+"', '"version": "' + $downstreamVersion + '"')
+    [IO.File]::WriteAllText($manifestPath, $manifestText, [Text.UTF8Encoding]::new($false))
+    $releasePath = Join-Path $root 'techpanda/release.json'
+    $release = Get-Content -Raw -LiteralPath $releasePath | ConvertFrom-Json
+    $release.upstream_tag = $ReleaseTag
+    $release.upstream_version = $upstreamVersion
+    $release.downstream_version = $downstreamVersion
+    $release.release_tag = $downstreamTag
+    $release.release_status = 'prepared-not-published'
+    [IO.File]::WriteAllText($releasePath, ($release | ConvertTo-Json -Depth 8) + "`n", [Text.UTF8Encoding]::new($false))
+    Write-Host "Downstream version prepared: $downstreamTag (upstream baseline $ReleaseTag)"
+
     python techpanda/furniture/verify_registry.py --upstream-tag $ReleaseTag
     if ($LASTEXITCODE) { throw 'The TechPanda registry overlay or an official key was lost; inspect the merge before proceeding.' }
     Import-Module (Join-Path $root 'scripts/NeonPlan.Dev.psm1') -Force -DisableNameChecking

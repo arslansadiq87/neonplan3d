@@ -14,6 +14,12 @@
       "change": "Add TechPanda Ed25519 public key 4d62b4e84557 to PACK_PUBLIC_KEYS and the same id to STUDIO_KEYS, restricting it to studio.* furniture-only packs with no Pro features or executable module.",
       "official_keys_preserved": ["62863e45df5a", "867371cc70e6", "bdac241ae58b"],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/manifest.json",
+      "change": "Set downstream HACS version 4.0.2.1 (four-part version: upstream 4.0.2 plus TechPanda revision 1); reset/update this after each reviewed upstream merge.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
     }
   ],
   "custom_source_outside_runtime": "techpanda/furniture/",
