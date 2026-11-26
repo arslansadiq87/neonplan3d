@@ -11,9 +11,9 @@
   },
   "default_mount_y_m": 0,
   "color": {
-    "body": "#41474e",
-    "cover": "#555c64",
-    "water": "#238bc3",
+    "body": "#26384b",
+    "cover": "#1b2939",
+    "water": "#167da7",
     "finish_role": "body"
   },
   "features": ["raised cover", "round inspection hatch", "inlet", "outlet", "front level window", "support rails"],

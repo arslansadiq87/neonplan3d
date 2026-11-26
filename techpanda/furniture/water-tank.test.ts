@@ -14,6 +14,14 @@ const pack = { id: source.id, name: source.name, items: source.items };
 const item = source.items[0] as PackItem;
 const type = packType(pack.id, item.id);
 
+test("style update advances the pack release while preserving placed furniture identity", () => {
+  assert.equal(source.release, 2);
+  assert.equal(source.id, "studio.techpanda.water_tanks");
+  assert.equal(item.id, "rectangular_water_tank");
+  assert.deepEqual(item.slots?.map((slot: { id: string }) => slot.id), ["level"]);
+  assert.equal(type, "pack:studio.techpanda.water_tanks:rectangular_water_tank");
+});
+
 test("tank uses native defaults and independently resizes all three dimensions", () => {
   setPacks([pack]);
   assert.deepEqual(furnitureSize(type), [2, 1.5, 1.5]);
