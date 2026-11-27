@@ -15,7 +15,7 @@ Testing prerelease based on upstream `v4.0.2`, continuing the TechPanda `v4.0.2.
 - Production build passed existing bundle budgets: main 795.3/870 KB, 3D viewer 939.6/940 KB, editor 1154.0/1160 KB, infrastructure 46.7/240 KB, Smart RGB lazy module 52.8/240 KB.
 - Linux-compatible HACS ZIP contains 84 root-level files. POSIX paths, extraction inventory and file hashes passed local verification.
 - Smart RGB furniture pack release 2 is reused from b4 and retains its verified signature and SHA-256.
-- GitHub CI results will be recorded after the release commit completes CI.
+- GitHub CI passed on commit `b4899705` in run [46079840286](https://github.com/arslansadiq87/neonplan3d/actions/runs/46079840286), including frontend regression/typecheck/build freshness, Linux archive verification, backend lint/typecheck/pytest, and signing-key registry verification.
 - Home Assistant behavior is represented by synthetic tests only; no live HA configuration, physical lights, deployment, or restart was used.
 
 ## Assets
