@@ -5,12 +5,12 @@
     "downstream_owner":  "arslansadiq87",
     "downstream_repository":  "neonplan3d",
     "downstream_branch":  "techpanda-custom",
-    "previous_downstream_version":  "4.0.2.4b3",
-    "downstream_version":  "4.0.2.4b4",
-    "release_tag":  "v4.0.2.4b4",
-    "release_status":  "published_testing_prerelease",
+    "previous_downstream_version":  "4.0.2.4b4",
+    "downstream_version":  "4.0.2.4b5",
+    "release_tag":  "v4.0.2.4b5",
+    "release_status":  "prepared-not-published",
     "assets_sha256":  {
-                          "neonplan3d.zip":  "1fe7681926351f9777d6bd61cb56662a6b708ada918b8dfb4827bd23bb58783e",
+                          "neonplan3d.zip":  "137f4770437544729334022809c5fbf2d060db4312ddab74c4e61e1a996d2bd3",
                           "techpanda-smart-rgb-ha-examples.zip":  "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd",
                           "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93"
                       },
@@ -28,13 +28,13 @@
     "pending_runtime_overlay_paths":  [
 
                                       ],
-    "release_notes":  "techpanda/release-notes-v4.0.2.4b4.md",
-    "checksums_file":  "techpanda/dist/SHA256SUMS-v4.0.2.4b4.txt",
+    "release_notes":  "techpanda/release-notes-v4.0.2.4b5.md",
+    "checksums_file":  "techpanda/dist/SHA256SUMS-v4.0.2.4b5.txt",
     "release_assets":  [
                            "neonplan3d.zip",
                            "techpanda-smart-rgb-lighting-v2.fp3dpack",
                            "techpanda-smart-rgb-ha-examples.zip",
-                           "SHA256SUMS-v4.0.2.4b4.txt"
+                           "SHA256SUMS-v4.0.2.4b5.txt"
                        ],
     "frontend_bundle_sizes_kb":  {
                                      "neonplan3d.js":  795.3,
