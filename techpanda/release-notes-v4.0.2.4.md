@@ -19,7 +19,7 @@ Testing prerelease tag: `v4.0.2.4b1`. This HACS-compatible prerelease tracks imp
 
 ## Artifacts
 
-- HACS archive: `techpanda/dist/neonplan3d.zip` (83 root-level files; SHA-256 `e61e39670135cbb44168e6e2851bde0e6932fbc50d94d371fb34fbdedfd331cd`).
+- HACS archive: `techpanda/dist/neonplan3d.zip` (83 root-level files; SHA-256 `2814870a53fd8cf6a77fd428933b333cfefbcab2d8f17c03efc2af1a599ad314`).
 - Furniture pack: `techpanda/furniture/dist/cctv-network.source.fp3dpack` (SHA-256 `463be22ae94313a47b43af53cb8211026f1645d642d9db9fc8afd9a9d748c148`).
 - Install test version `v4.0.2.4b1` only after it is published and approved. Enable HACS pre-releases for this repository to select it. Before installation, make a normal HA backup and an integration-only backup; see `techpanda/furniture/CCTV-NETWORK.md` for manual acceptance steps and rollback instructions.
 
