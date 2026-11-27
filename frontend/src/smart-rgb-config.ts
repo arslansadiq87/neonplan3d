@@ -5,6 +5,8 @@ export const SMART_RGB_PACK_ID = "studio.techpanda.smart_rgb_lighting";
 export const SMART_RGB_MODULE_ID = "studio.techpanda.smart_rgb_lighting";
 export const HEX_FRAME_ITEM_ID = "hexagonal_rgb_frame_lights";
 export const TRIANGLE_WALL_ITEM_ID = "multizone_geometric_rgb_wall_lights";
+/** Matches the native pack renderer's default base for wall mounted furniture. */
+export const SMART_RGB_DEFAULT_WALL_MOUNT_Y = 1;
 
 export interface SmartRgbZone {
   id: number;
@@ -103,7 +105,10 @@ export function readSmartRgbConfig(item: Pick<Furniture, "mods" | "type">): Smar
   const base = defaultSmartRgbConfig(kind);
   if (!stored || stored.version !== 1 || stored.kind !== kind) return base;
   if (kind === "hex") return sanitizeSmartRgbConfig({ ...base, ...stored, bindings: { ...base.bindings, ...stored.bindings }, hex: { ...base.hex!, ...stored.hex, cells: stored.hex?.cells?.length ? stored.hex.cells : base.hex!.cells } });
-  return sanitizeSmartRgbConfig({ ...base, ...stored, bindings: { ...base.bindings, ...stored.bindings }, wall: { ...base.wall!, ...stored.wall, zones: stored.wall?.zones?.length ? stored.wall.zones : base.wall!.zones, edgeZones: { ...base.wall!.edgeZones, ...stored.wall?.edgeZones } } });
+  const edgeZones = stored.wall && Object.prototype.hasOwnProperty.call(stored.wall, "edgeZones")
+    ? stored.wall.edgeZones ?? {}
+    : base.wall!.edgeZones;
+  return sanitizeSmartRgbConfig({ ...base, ...stored, bindings: { ...base.bindings, ...stored.bindings }, wall: { ...base.wall!, ...stored.wall, zones: stored.wall?.zones?.length ? stored.wall.zones : base.wall!.zones, edgeZones } });
 }
 
 export function writeSmartRgbConfig(item: Furniture, config: SmartRgbConfig): void {

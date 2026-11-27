@@ -303,7 +303,19 @@
     },
     {
       "path": "frontend/src/smart-rgb-config.ts",
-      "change": "Define versioned furniture.mods configuration, stable fixture IDs, default entity bindings, and firmware zone mapping.",
+      "change": "Define versioned furniture.mods configuration, stable fixture IDs, default entity bindings and firmware zone mapping; retain saved sparse/empty LED edge maps without merging default assignments and align implicit wall mounting with the native pack default.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Refresh native RGB furniture geometry and animation state when its bound Home Assistant light, sensor, pattern, brightness, speed or colour state changes; restore the saved plan configuration after asynchronous lazy-runtime loading and refresh native floor geometry after lazy renderer registration even when the plan key is unchanged.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Expose refreshFurniture() to rebuild the native viewer geometry for the current shown plan after an isolated lazy furniture renderer registers, bypassing same-plan-key update suppression without changing plan data.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -315,7 +327,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-runtime.ts",
-      "change": "Render procedural RGB furniture through native viewer geometry buffers and existing batched flow effects; watch bound entities. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
+      "change": "Render only explicitly configured thin RGB wall strips through native viewer geometry buffers; align the lazily generated animated flow with physical LED centerlines and native wall mounting. Keep dark housings visible against dark walls. Unbound, missing, unavailable, off and zero-brightness states remain dark; only powered-on non-solid effects animate. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -345,7 +357,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-config.test.ts",
-      "change": "Cover default fixture configuration, firmware zone mappings, sanitization, and persistence across plan cloning.",
+      "change": "Cover default fixture configuration, firmware zone mappings, sanitization, persistence across plan cloning, and saved sparse/empty edge maps.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -357,7 +369,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-runtime.test.ts",
-      "change": "Cover powered/off/unavailable geometry, brightness/color, selected zones, placement, shared-edge rendering, and rendering when the isolated lazy bundle has no shared pack registry.",
+      "change": "Cover powered/off/unavailable geometry, brightness/color, selected zones, LED-only wall rendering, exact animated LED centerline alignment across mount elevations/rotation/resizing, and rendering when the isolated lazy bundle has no shared pack registry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },

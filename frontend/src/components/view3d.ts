@@ -6580,6 +6580,11 @@ export class Fp3dView3d extends LitElement {
     return this.viewer?.currentView() ?? null;
   }
 
+  /** Rebuild furniture after a lazy renderer registers without changing the plan. */
+  refreshFurniture(): void {
+    if (this.viewer && this.building) this.viewer.setBuilding(this.shownBuilding()!);
+  }
+
   resetView(): void {
     this._through = null;
     this.viewer?.resetView();

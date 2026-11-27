@@ -164,6 +164,8 @@ export class Floorplan3dPanel extends LitElement {
   private _infrastructureReady = false;
   private _smartRgbReady = false;
   private _smartRgbLoading = false;
+  private _smartRgbStateSignature = "";
+  private _smartRgbStateBuilding: Building | null = null;
   private _infraFocus = "";
   private declare _floorId: string | null;
   private declare _roomId: string | null;
@@ -788,12 +790,33 @@ export class Floorplan3dPanel extends LitElement {
         this._smartRgbReady = true;
         this._smartRgbLoading = false;
         if (this.hass && typeof window !== "undefined") window.__tpSmartRgbStates = this.hass.states;
-        const view = this.view3d() as (HTMLElement & { building?: Building | null; hass?: HomeAssistant }) | null;
-        if (view && smartBuilding) { view.hass = this.hass; view.building = structuredClone(smartBuilding); }
+        const view = this.view3d() as (HTMLElement & { building?: Building | null; hass?: HomeAssistant; refreshFurniture?: () => void }) | null;
+        if (view && smartBuilding) { view.hass = this.hass; view.refreshFurniture?.(); }
         this.requestUpdate();
       }).catch((err: unknown) => { this._smartRgbLoading = false; this.data.error = String(err); });
     }
-    if (this._smartRgbReady && this.hass && typeof window !== "undefined") window.__tpSmartRgbStates = this.hass.states;
+    if (this._smartRgbReady && this.hass && typeof window !== "undefined") {
+      window.__tpSmartRgbStates = this.hass.states;
+      if (smartBuilding && window.__tpSmartRgbWatched) {
+        const ids = window.__tpSmartRgbWatched(smartBuilding);
+        const signature = ids.map(id => {
+          const entity = this.hass.states[id];
+          if (!entity) return `${id}:missing`;
+          const attrs = id.startsWith("sensor.") ? entity.attributes.zones : id.startsWith("light.") ? [entity.attributes.rgb_color, entity.attributes.color, entity.attributes.brightness, entity.attributes.effect] : [];
+          return JSON.stringify([id, entity.state, attrs]);
+        }).join("|");
+        const planChanged = this._smartRgbStateBuilding !== smartBuilding;
+        const firstState = !this._smartRgbStateSignature;
+        if (signature !== this._smartRgbStateSignature) {
+          this._smartRgbStateSignature = signature;
+          if (!firstState && !planChanged) {
+            const view = this.view3d() as (HTMLElement & { refreshFurniture?: () => void }) | null;
+            view?.refreshFurniture?.();
+          }
+        }
+        this._smartRgbStateBuilding = smartBuilding;
+      }
+    }
     if (this.data.plans.length > 1) this.watch.watch(this.hass, this.data);
     this.followLink();
     if (this.nowLinkOpen && this.phoneShell()) {

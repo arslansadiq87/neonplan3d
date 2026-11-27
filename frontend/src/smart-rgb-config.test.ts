@@ -24,6 +24,17 @@ test("wall light uses actual five firmware zone IDs without a one-panel-per-zone
   assert.ok(Object.keys(config.wall?.edgeZones ?? {}).length > 1);
 });
 
+test("a saved sparse or empty edge map is complete and does not regain default LED assignments", () => {
+  const item = furniture("pack:studio.techpanda.smart_rgb_lighting:multizone_geometric_rgb_wall_lights");
+  const config = defaultSmartRgbConfig("triangles");
+  config.wall!.edgeZones = {};
+  writeSmartRgbConfig(item, config);
+  assert.deepEqual(readSmartRgbConfig(item)?.wall?.edgeZones, {});
+  config.wall!.edgeZones = { [Object.keys(defaultSmartRgbConfig("triangles").wall!.edgeZones)[0]]: 2 };
+  writeSmartRgbConfig(item, config);
+  assert.deepEqual(readSmartRgbConfig(item)?.wall?.edgeZones, config.wall!.edgeZones);
+});
+
 test("configuration stays on a furniture item through ordinary clone and resize operations", () => {
   const item = furniture("pack:studio.techpanda.smart_rgb_lighting:multizone_geometric_rgb_wall_lights");
   const config = readSmartRgbConfig(item)!;
