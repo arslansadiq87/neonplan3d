@@ -14,6 +14,10 @@ import type { Floor } from "../model.ts";
 import { ALWAYS, DEG, EDGE_TOP, GeoBuffer, LineBuffer, pushLoft, pushLyingCyl, pushPrism, shade } from "./geo.ts";
 import { hexColor, naturalPalette, palette } from "./palette.ts";
 import { finishTargetOf, finishTargets } from "../finishes.ts";
+import type { HassEntity } from "../types.ts";
+
+type SmartRgbFace = { a: [number, number, number]; b: [number, number, number]; c: [number, number, number]; color: string };
+declare global { interface Window { __tpSmartRgbDraw?: (f: Furniture, base: number, states: Record<string, HassEntity>) => SmartRgbFace[] | null; __tpSmartRgbStates?: Record<string, HassEntity> } }
 
 const BASE = palette({
   body: 0x172238,
@@ -1939,7 +1943,9 @@ function buildModel(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Fur
         // live parts (3.4) are models of their own too, moved by the viewer (pushPackLive); a picture keeps them
         const live = !still && hasLiveParts(item);
         const skip = !still && (packSpinAxis(item) || live) ? (p: PackPart) => !!p.spin || !!p.bind || !!own?.(p) : own;
-        packModel(b, item, w, d, h, base, null, null, skip);
+        const smartRgb = typeof window === "undefined" ? null : window.__tpSmartRgbDraw?.(f, base, window.__tpSmartRgbStates ?? {});
+        if (smartRgb) for (const face of smartRgb) buf.tri(face.a, face.b, face.c, new Color(face.color));
+        else packModel(b, item, w, d, h, base, null, null, skip);
         // items on furniture, walls or ceilings cast no shadow on the floor
         if (base > 0.05) return;
       } else b.box(-w / 2, w / 2, 0, h, -d / 2, d / 2, C.body, C.bodyTop, EDGE_FURN);

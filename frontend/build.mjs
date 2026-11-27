@@ -56,6 +56,8 @@ const voiceConfig = { ...common, entryPoints: ["src/voice/entry.ts"], outfile: `
 const locateConfig = { ...common, entryPoints: ["src/locate/entry.ts"], outfile: `${out}/neonplan3d-locate.js` };
 // TechPanda installation manager: loaded only when its page is opened.
 const infrastructureConfig = { ...common, entryPoints: ["src/infrastructure-manager.ts"], outfile: `${out}/neonplan3d-infrastructure.js` };
+// Custom procedural wall geometry and its controls are kept out of the main and 3D bundles.
+const smartRgbConfig = { ...common, entryPoints: ["src/smart-rgb-entry.ts"], outfile: `${out}/neonplan3d-smart-rgb.js` };
 // fetching the neighbourhood from OpenStreetMap only loads when an admin fetches the map
 const osmConfig = { ...common, entryPoints: ["src/surround-fetch.ts"], outfile: `${out}/neonplan3d-osm.js` };
 // the import page of the website (other programs' plans to NeonPlan, in the browser): not part of the integration
@@ -63,7 +65,7 @@ const importConfig = { ...common, entryPoints: ["src/import/app.ts"], outfile: "
 // The main bundle loads the 3D bundle with a hash of its content in the URL, so a new 3D bundle is
 // never taken from the browser cache (the integration version only changes after a restart).
 // the frontend knows its own version, to notice a backend that still runs an older one
-const mainConfig = (viewerHash, editorHash, cardEditorHash, timeTravelHash, funHash, voiceHash, locateHash, infrastructureHash) => ({
+const mainConfig = (viewerHash, editorHash, cardEditorHash, timeTravelHash, funHash, voiceHash, locateHash, infrastructureHash, smartRgbHash) => ({
   ...common,
   entryPoints: ["src/main.ts"],
   outfile: `${out}/neonplan3d.js`,
@@ -76,6 +78,7 @@ const mainConfig = (viewerHash, editorHash, cardEditorHash, timeTravelHash, funH
     __FP3D_VOICE_HASH__: JSON.stringify(voiceHash),
     __FP3D_LOCATE_HASH__: JSON.stringify(locateHash),
     __FP3D_INFRASTRUCTURE_HASH__: JSON.stringify(infrastructureHash),
+    __FP3D_SMART_RGB_HASH__: JSON.stringify(smartRgbHash),
     __FP3D_VERSION__: JSON.stringify(version),
     __FP3D_LANG_HASH__: JSON.stringify(langHash),
   },
@@ -183,16 +186,17 @@ function copyFonts() {
 // editor 1160 KB on 2026-11-19: the card form asks what a card is for (tablet / phone) and holds the phone bar's options and own places
 // 3D 928 KB on 2026-11-21: a finger or the mouse on a pin, a name or a glass card turns and zooms the house (#1248, #1271)
 // 3D 940 KB on 2026-11-23: the fixes of 4.0.2 (camera cones over steps, a terrace's row on the map, robots across floors)
-const BUDGET = { "neonplan3d.js": 870 * 1024, "neonplan3d-fun.js": 40 * 1024, "neonplan3d-voice.js": 60 * 1024, "neonplan3d-locate.js": 160 * 1024, "neonplan3d-infrastructure.js": 240 * 1024, "neonplan3d-osm.js": 20 * 1024, "neonplan3d-timetravel.js": 120 * 1024, "neonplan3d-3d.js": 940 * 1024, "neonplan3d-editor.js": 1160 * 1024, "neonplan3d-card-editor.js": 340 * 1024 };
+const BUDGET = { "neonplan3d.js": 870 * 1024, "neonplan3d-fun.js": 40 * 1024, "neonplan3d-voice.js": 60 * 1024, "neonplan3d-locate.js": 160 * 1024, "neonplan3d-infrastructure.js": 240 * 1024, "neonplan3d-smart-rgb.js": 240 * 1024, "neonplan3d-osm.js": 20 * 1024, "neonplan3d-timetravel.js": 120 * 1024, "neonplan3d-3d.js": 940 * 1024, "neonplan3d-editor.js": 1160 * 1024, "neonplan3d-card-editor.js": 340 * 1024 };
 
 copyFonts();
 if (watch) {
   // in watch mode the hash is not tracked; a dev reload fetches the bundle anyway
-  for (const c of [viewerConfig, editorConfig("dev", "dev", "dev", "dev"), cardEditorConfig, timeTravelConfig, funConfig, voiceConfig, locateConfig, infrastructureConfig, osmConfig, mainConfig("dev", "dev", "dev", "dev", "dev", "dev", "dev", "dev")]) await (await context(c)).watch();
+  for (const c of [viewerConfig, editorConfig("dev", "dev", "dev", "dev"), cardEditorConfig, timeTravelConfig, funConfig, voiceConfig, locateConfig, infrastructureConfig, smartRgbConfig, osmConfig, mainConfig("dev", "dev", "dev", "dev", "dev", "dev", "dev", "dev", "dev")]) await (await context(c)).watch();
 } else {
   await build(viewerConfig);
   await build(locateConfig);
   await build(infrastructureConfig);
+  await build(smartRgbConfig);
   await build(osmConfig);
   await build(cardEditorConfig);
   const editor = editorConfig(hashOf(viewerConfig.outfile), hashOf(locateConfig.outfile), hashOf(cardEditorConfig.outfile), hashOf(osmConfig.outfile));
@@ -201,7 +205,7 @@ if (watch) {
   await build(funConfig);
   await build(voiceConfig);
   await build(importConfig);
-  await build(mainConfig(hashOf(viewerConfig.outfile), hashOf(editor.outfile), hashOf(cardEditorConfig.outfile), hashOf(timeTravelConfig.outfile), hashOf(funConfig.outfile), hashOf(voiceConfig.outfile), hashOf(locateConfig.outfile), hashOf(infrastructureConfig.outfile)));
+  await build(mainConfig(hashOf(viewerConfig.outfile), hashOf(editor.outfile), hashOf(cardEditorConfig.outfile), hashOf(timeTravelConfig.outfile), hashOf(funConfig.outfile), hashOf(voiceConfig.outfile), hashOf(locateConfig.outfile), hashOf(infrastructureConfig.outfile), hashOf(smartRgbConfig.outfile)));
   let over = false;
   // old Fire-tablet WebViews (Chrome before 91, e.g. Fully Kiosk on a Fire 7) throw on an optional call with spread
   // arguments, `a?.b(...x)` – the roof failed there; lowering the target for it would cost ~11 KB, so it is banned

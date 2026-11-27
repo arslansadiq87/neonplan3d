@@ -5,13 +5,14 @@
   "downstream_owner": "arslansadiq87",
   "downstream_repository": "neonplan3d",
   "downstream_branch": "techpanda-custom",
-  "previous_downstream_version": "4.0.2.4b1",
-  "downstream_version": "4.0.2.4b2",
-  "release_tag": "v4.0.2.4b2",
-  "release_status": "testing_prerelease_ready",
+  "previous_downstream_version": "4.0.2.4b2",
+  "downstream_version": "4.0.2.4b3",
+  "release_tag": "v4.0.2.4b3",
+  "release_status": "testing_prerelease_prepared",
   "assets_sha256": {
-    "neonplan3d.zip": "b7665b50f014ca0eebd570d0ed6b402e615e4d79c0f800da94e281ddf40241e3",
-    "techpanda-cctv-network.fp3dpack": "7f9c79b0996073631568bc6a523b3cac1ba2368a98f319e44e02c3f5ea1d5ee6"
+    "neonplan3d.zip": "03477a2c332741011f36597ca2d71e2c190a33f2c14b78fe44a9453842954e02",
+    "techpanda-smart-rgb-lighting-v1.fp3dpack": "ea083f395350979b46a1fb13e216cd11cdd679746ca1d8b05b9a108bd2acb3a7",
+    "techpanda-smart-rgb-ha-examples.zip": "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd"
   },
   "runtime_overlay_paths": [
     "packs.py",
@@ -20,7 +21,24 @@
     "frontend/neonplan3d-3d.js",
     "frontend/neonplan3d-editor.js",
     "frontend/neonplan3d-infrastructure.js",
-    "frontend/neonplan3d-card-editor.js"
+    "frontend/neonplan3d-card-editor.js",
+    "frontend/neonplan3d-smart-rgb.js"
   ],
-  "stable_rollback_version": "4.0.2.3"
+  "stable_rollback_version": "4.0.2.3",
+  "pending_runtime_overlay_paths": [],
+  "release_notes": "techpanda/release-notes-v4.0.2.4b3.md",
+  "checksums_file": "techpanda/dist/SHA256SUMS.txt",
+  "release_assets": [
+    "neonplan3d.zip",
+    "techpanda-smart-rgb-lighting-v1.fp3dpack",
+    "techpanda-smart-rgb-ha-examples.zip",
+    "SHA256SUMS.txt"
+  ],
+  "frontend_bundle_sizes_kb": {
+    "neonplan3d.js": 794.7,
+    "neonplan3d-3d.js": 939.6,
+    "neonplan3d-editor.js": 1154.0,
+    "neonplan3d-smart-rgb.js": 52.7,
+    "neonplan3d-infrastructure.js": 46.7
+  }
 }

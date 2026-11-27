@@ -11,6 +11,7 @@ import type { Fp3dPhoneShell } from "./components/phone-shell.ts";
 import type { NavMoreItem } from "./components/phone-nav.ts";
 import { loadEditor } from "./load-editor.ts";
 import { loadInfrastructureManager } from "./load-infrastructure.ts";
+import { loadSmartRgb } from "./load-smart-rgb.ts";
 import "./components/plan-overview.ts";
 import "./components/plan-picker.ts";
 import { alertText, type Alert } from "./alerts.ts";
@@ -50,7 +51,7 @@ import type { FloorStack, Quality, WallMode } from "./viewer/viewer3d.ts";
 /** The corners of the clock, as arrows in the view menu (the full name is the button's title). */
 const CLOCK_ARROW: Record<Exclude<ClockPos, "off">, string> = { tl: "↖", tr: "↗", bl: "↙", br: "↘" };
 
-type Mode = "view" | "editor" | "extensions" | "infrastructure";
+type Mode = "view" | "editor" | "extensions" | "infrastructure" | "smart-rgb";
 
 /** View preferences belong to the device (a wall tablet wants other settings than a desktop). */
 const prefs = {
@@ -161,6 +162,8 @@ export class Floorplan3dPanel extends LitElement {
   /** The editor bundle is loaded (it is fetched the first time the editor opens). */
   private declare _editorReady: boolean;
   private _infrastructureReady = false;
+  private _smartRgbReady = false;
+  private _smartRgbLoading = false;
   private _infraFocus = "";
   private declare _floorId: string | null;
   private declare _roomId: string | null;
@@ -379,6 +382,7 @@ export class Floorplan3dPanel extends LitElement {
     this._mode = mode;
     if (mode === "extensions") this.printOpened();
     if (mode === "infrastructure") Promise.all([loadInfrastructureManager(),loadEditor()]).then(()=>{this._infrastructureReady=true;this._editorReady=true;this.requestUpdate();}).catch((err:unknown)=>{this.data.error=String(err);});
+    if (mode === "smart-rgb") loadSmartRgb().then(()=>{this._smartRgbReady=true;this.requestUpdate();}).catch((err:unknown)=>{this.data.error=String(err);});
     countView(mode);
   }
 
@@ -776,6 +780,20 @@ export class Floorplan3dPanel extends LitElement {
   }
 
   protected updated(): void {
+    const smartBuilding = this.data.building;
+    const smartItems = smartBuilding?.floors.some(floor => floor.furniture.some(item => item.type.startsWith("pack:studio.techpanda.smart_rgb_lighting:"))) ?? false;
+    if (smartItems && !this._smartRgbReady && !this._smartRgbLoading) {
+      this._smartRgbLoading = true;
+      void loadSmartRgb().then(() => {
+        this._smartRgbReady = true;
+        this._smartRgbLoading = false;
+        if (this.hass && typeof window !== "undefined") window.__tpSmartRgbStates = this.hass.states;
+        const view = this.view3d() as (HTMLElement & { building?: Building | null; hass?: HomeAssistant }) | null;
+        if (view && smartBuilding) { view.hass = this.hass; view.building = structuredClone(smartBuilding); }
+        this.requestUpdate();
+      }).catch((err: unknown) => { this._smartRgbLoading = false; this.data.error = String(err); });
+    }
+    if (this._smartRgbReady && this.hass && typeof window !== "undefined") window.__tpSmartRgbStates = this.hass.states;
     if (this.data.plans.length > 1) this.watch.watch(this.hass, this.data);
     this.followLink();
     if (this.nowLinkOpen && this.phoneShell()) {
@@ -1141,6 +1159,8 @@ export class Floorplan3dPanel extends LitElement {
               ? this.renderExtensions()
               : this._mode === "infrastructure" && this.isAdmin
                 ? this.renderInfrastructure(b)
+              : this._mode === "smart-rgb" && this.isAdmin
+                ? this.renderSmartRgb(b)
               : this.renderView(this._site ? (this.siteBuilding() ?? b) : b)
           : nothing}
         ${this.renderGift()}
@@ -1238,7 +1258,8 @@ export class Floorplan3dPanel extends LitElement {
       );
       return html`<div class="fp3d-empty"><p>${this.t("loading")}</p></div>`;
     }
-    return html`<div class="fp3d-body"><button class="fp3d-btn fp3d-primary" @click=${() => this.setMode("infrastructure")}>TechPanda Infrastructure Manager</button><fp3d-extensions
+    const hasRgb = this.data.building?.floors.some(floor => floor.furniture.some(item => item.type.startsWith("pack:studio.techpanda.smart_rgb_lighting:"))) ?? false;
+    return html`<div class="fp3d-body"><button class="fp3d-btn fp3d-primary" @click=${() => this.setMode("infrastructure")}>TechPanda Infrastructure Manager</button>${hasRgb ? html`<button class="fp3d-btn fp3d-primary" style="margin-left:8px" @click=${() => this.setMode("smart-rgb")}>TechPanda Smart RGB Lighting</button>` : nothing}<fp3d-extensions
       class="fp3d-body"
       .hass=${this.hass}
       .packs=${this.data.packs}
@@ -1260,6 +1281,14 @@ export class Floorplan3dPanel extends LitElement {
       @locate-equipment=${(e: CustomEvent<{floorId:string;furnitureId:string}>) => { this._mode="editor"; this.requestUpdate(); setTimeout(()=>{ const ed=this.renderRoot.querySelector("fp3d-editor") as HTMLElement & {_floorId?:string;_furnitureId?:string;_roomId?:string;requestUpdate?:()=>void}; if(ed){ed._floorId=e.detail.floorId;ed._furnitureId=e.detail.furnitureId;ed._roomId=undefined;ed.requestUpdate?.();} },0); }}
       @infrastructure-overlay=${(e:CustomEvent<{routes:unknown[];wifi:unknown[]}>)=>{this._infraRoutes=e.detail.routes;this._infraWifi=e.detail.wifi;}}
     ></techpanda-infrastructure-manager></div>`;
+  }
+
+  private renderSmartRgb(b: Building) {
+    if (!this._smartRgbReady) return html`<div class="fp3d-empty"><p>${this.t("loading")}</p></div>`;
+    return html`<techpanda-smart-rgb-manager class="fp3d-body" .hass=${this.hass} .building=${b}
+      @smart-rgb-edit=${(e: CustomEvent<Building>) => this.data.edit(e.detail)}
+      @close-manager=${() => this.setMode("extensions")}
+    ></techpanda-smart-rgb-manager>`;
   }
 
   private renderEditor(b: Building) {

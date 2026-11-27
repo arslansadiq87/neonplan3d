@@ -34,6 +34,27 @@ try {
   await (await import("node:fs/promises")).mkdir(output, { recursive: true });
   const safeName = source.split(/[\\/]/).at(-1).replace(/\.json$/i, "");
   const scenarios = pack.items.flatMap((item) => {
+    if (item.id === "hexagonal_rgb_frame_lights") return [
+      { id: "hex-default-iso-rainbow", item: item.id, view: "iso", pattern: "rainbow" },
+      { id: "hex-front-hollow-centres", item: item.id, view: "front", pattern: "rainbow" },
+      { id: "hex-side-frame-depth", item: item.id, view: "side", pattern: "rainbow" },
+      { id: "hex-solid-cyan", item: item.id, view: "front", pattern: "solid" },
+      { id: "hex-multicolour-rainbow", item: item.id, view: "iso", pattern: "rainbow_glitter" },
+      { id: "hex-powered-off", item: item.id, view: "iso", pattern: "solid", power: "off" },
+      { id: "hex-expanded-shared-bars", item: item.id, view: "iso", pattern: "rainbow", layout: "expanded" },
+      { id: "paired-wall-and-hex", item: item.id, view: "iso", pattern: "rainbow", companion: "multizone_geometric_rgb_wall_lights" },
+    ];
+    if (item.id === "multizone_geometric_rgb_wall_lights") return [
+      { id: "wall-full-triangular-layout", item: item.id, view: "iso", pattern: "RAINBOW", zones: "multi" },
+      { id: "wall-groove-detail", item: item.id, view: "front", pattern: "RAINBOW", w: 2.4, h: 2.0 },
+      { id: "wall-raised-side-profile", item: item.id, view: "side", pattern: "RAINBOW" },
+      { id: "wall-concealed-edge-strips", item: item.id, view: "iso", pattern: "SOLID", zones: "multi" },
+      { id: "wall-independent-rgb-zones", item: item.id, view: "iso", pattern: "RAINBOW", zones: "multi" },
+      { id: "wall-rainbow-gradients", item: item.id, view: "front", pattern: "RAINBOW", zones: "multi" },
+      { id: "wall-solid-colour", item: item.id, view: "iso", pattern: "SOLID", zones: "multi" },
+      { id: "wall-powered-off", item: item.id, view: "iso", pattern: "SOLID", zones: "multi", power: "off" },
+      { id: "paired-hex-and-wall", item: item.id, view: "iso", pattern: "RAINBOW", zones: "multi", companion: "hexagonal_rgb_frame_lights" },
+    ];
     if (item.id === "cylindrical_water_tank") return [
       { id: "cylindrical-iso-default", item: item.id, view: "iso", level: "none" },
       { id: "cylindrical-top", item: item.id, view: "top", level: "none" },

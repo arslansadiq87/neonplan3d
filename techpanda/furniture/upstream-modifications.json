@@ -153,7 +153,7 @@
     },
     {
       "path": "custom_components/neonplan3d/manifest.json",
-      "change": "Set downstream HACS version 4.0.2.3 (four-part version: upstream 4.0.2 plus TechPanda revision 3); reset/update this after each reviewed upstream merge.",
+      "change": "Set the downstream HACS version from techpanda/release.json (currently 4.0.2.4b3, based on upstream 4.0.2); update this value for each reviewed downstream prerelease or stable release.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/release.json"
     },
@@ -292,6 +292,84 @@
     {
       "path": "frontend/src/viewer/viewer3d-selection.test.ts",
       "change": "Cover the targeted furniture selection ghost policy: router and access point are suppressed while other furniture types keep their wireframe.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/load-smart-rgb.ts",
+      "change": "Load the Smart RGB manager chunk on demand through a cache-busted dynamic import.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-config.ts",
+      "change": "Define versioned furniture.mods configuration, stable fixture IDs, default entity bindings, and firmware zone mapping.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-geometry.ts",
+      "change": "Generate bounded shared-edge hex and triangular panel/groove layout geometry.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-runtime.ts",
+      "change": "Render procedural RGB furniture through native viewer geometry buffers and existing batched flow effects; watch bound entities. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-services.ts",
+      "change": "Call existing Home Assistant entity services from the isolated Smart RGB manager; no direct browser-to-controller calls.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-manager.ts",
+      "change": "Add the lazy editor for fixture layouts, raised panels, assigned RGB edges, bindings, and HA service controls.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-entry.ts",
+      "change": "Register the Smart RGB runtime and manager in the independently lazy-loaded bundle.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/furniture.ts",
+      "change": "Allow the native furniture builder to consume the Smart RGB triangle geometry callback.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-config.test.ts",
+      "change": "Cover default fixture configuration, firmware zone mappings, sanitization, and persistence across plan cloning.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-geometry.test.ts",
+      "change": "Cover connected-hex shared edges, triangular layout/grooves, and bounded geometry generation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-runtime.test.ts",
+      "change": "Cover powered/off/unavailable geometry, brightness/color, selected zones, placement, shared-edge rendering, and rendering when the isolated lazy bundle has no shared pack registry.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/smart-rgb-services.test.ts",
+      "change": "Verify Home Assistant service routing and no-op behavior for unavailable/unconfigured entities.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-smart-rgb.js",
+      "change": "Generated isolated Smart RGB manager and viewer bundle (52.7 KB); package at integration frontend root and load on demand. Viewer geometry resolves without cross-bundle pack registry state.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }

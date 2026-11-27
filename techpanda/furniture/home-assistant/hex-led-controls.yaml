@@ -1,0 +1,164 @@
+# Reference copy of the Hex LED configuration supplied by the user.
+# It defines light.hex_led, sensor.hex_led_status_raw, helpers, rest_command, and automations.
+# Do not install alongside the existing configuration: that would duplicate those definitions.
+# Use only on a clean setup after confirming these ids and keys are absent.
+# Replace hex.local only when deliberately configuring a new controller.
+
+rest_command:
+  hex_led_set:
+    url: "http://hex.local/api/set"
+    method: post
+    content_type: "application/json"
+    payload: >
+      {
+        "power": {{ power | tojson }},
+        "brightness": {{ brightness | tojson }},
+        "pattern": {{ pattern | tojson }},
+        "speed_ms": {{ speed_ms | tojson }},
+        "color": {{ color | tojson }}
+      }
+
+template:
+  - trigger:
+      - platform: time_pattern
+        seconds: "/10"
+    action:
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.hex_led_status_raw
+    sensor:
+      - name: Hex LED Pattern
+        unique_id: hex_led_pattern
+        state: "{{ state_attr('sensor.hex_led_status_raw', 'pattern') }}"
+      - name: Hex LED Mode
+        unique_id: hex_led_mode
+        state: "{{ state_attr('sensor.hex_led_status_raw', 'mode') }}"
+      - name: Hex LED IP
+        unique_id: hex_led_ip
+        state: "{{ state_attr('sensor.hex_led_status_raw', 'ip') }}"
+    light:
+      - name: Hex LED
+        unique_id: hex_led
+        default_entity_id: light.hex_led
+        state: "{{ state_attr('sensor.hex_led_status_raw', 'power') | bool(false) }}"
+        level: "{{ state_attr('sensor.hex_led_status_raw', 'brightness') | int(0) }}"
+        turn_on:
+          - action: rest_command.hex_led_set
+            data:
+              power: 1
+              brightness: "{{ brightness | default(state_attr('sensor.hex_led_status_raw', 'brightness'), true) | int }}"
+              pattern: null
+              speed_ms: null
+              color: null
+        turn_off:
+          - action: rest_command.hex_led_set
+            data:
+              power: 0
+              brightness: null
+              pattern: null
+              speed_ms: null
+              color: null
+        set_level:
+          - action: rest_command.hex_led_set
+            data:
+              power: 1
+              brightness: "{{ brightness | int }}"
+              pattern: null
+              speed_ms: null
+              color: null
+
+sensor:
+  - platform: rest
+    name: hex_led_status_raw
+    resource: http://hex.local/api/status
+    method: GET
+    value_template: "{{ value_json.power }}"
+    json_attributes:
+      - power
+      - brightness
+      - speed_ms
+      - pattern
+      - patterns
+      - color
+      - ip
+      - mode
+      - hostname
+      - ota
+
+input_select:
+  hex_led_pattern:
+    name: Hex LED Pattern
+    options:
+      - rainbow
+      - solid
+      - rainbow_glitter
+      - confetti
+      - sinelon
+      - juggle
+      - bpm
+
+input_number:
+  hex_led_speed:
+    name: Hex LED Speed
+    min: 5
+    max: 255
+    step: 1
+
+input_text:
+  hex_led_color:
+    name: Hex LED Color
+    initial: "#FFFFFF"
+
+automation:
+  - alias: Hex LED Pattern Sync
+    trigger:
+      - platform: state
+        entity_id: sensor.hex_led_pattern
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in ['unknown', 'unavailable', ''] }}"
+    action:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.hex_led_pattern
+        data:
+          option: "{{ trigger.to_state.state }}"
+  - alias: Hex LED Apply Pattern
+    trigger:
+      - platform: state
+        entity_id: input_select.hex_led_pattern
+    action:
+      - action: rest_command.hex_led_set
+        data:
+          power: null
+          brightness: null
+          pattern: "{{ states('input_select.hex_led_pattern') }}"
+          speed_ms: null
+          color: null
+  - alias: Hex LED Apply Speed
+    trigger:
+      - platform: state
+        entity_id: input_number.hex_led_speed
+    action:
+      - action: rest_command.hex_led_set
+        data:
+          power: null
+          brightness: null
+          pattern: null
+          speed_ms: "{{ states('input_number.hex_led_speed') | int }}"
+          color: null
+  - alias: Hex LED Apply Color
+    trigger:
+      - platform: state
+        entity_id: input_text.hex_led_color
+    condition:
+      - condition: template
+        value_template: "{{ states('input_select.hex_led_pattern') == 'solid' }}"
+    action:
+      - action: rest_command.hex_led_set
+        data:
+          power: null
+          brightness: null
+          pattern: null
+          speed_ms: null
+          color: "{{ states('input_text.hex_led_color') }}"

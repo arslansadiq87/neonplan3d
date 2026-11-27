@@ -1,0 +1,226 @@
+# Optional Home Assistant package for five firmware per-zone controls.
+# Before installing, confirm the unique ids/entity ids below do not already exist.
+# It adds a rest_command, five template lights, and ten number helpers; it preserves
+# the existing global light.rgb_lights and select.rgb_pattern.
+# Its syntax and payloads are repository-reviewed only; live HA validation was not run.
+#
+# The browser calls Home Assistant services on these template entities. Only
+# Home Assistant rest_command sends requests to the ESP32 controller.
+
+rest_command:
+  smart_rgb_zone_command:
+    url: "http://rgb.local/api/cmd"
+    method: post
+    content_type: "application/json"
+    payload: >-
+      {"zone": {{ zone | int }}
+      {% if cmd is defined %}, "cmd": {{ cmd | tojson }}{% endif %}
+      {% if brightness_ha is defined %}, "brightness_ha": {{ brightness_ha | int }}{% endif %}
+      {% if pattern is defined %}, "pattern": {{ pattern | tojson }}{% endif %}
+      {% if r is defined and g is defined and b is defined %}, "r": {{ r | int }}, "g": {{ g | int }}, "b": {{ b | int }}{% endif %}
+      {% if speed is defined %}, "speed": {{ [200, [1, speed | int] | max] | min }}{% endif %}
+      {% if count is defined %}, "count": {{ [600, [1, count | int] | max] | min }}{% endif %}}
+
+template:
+  - light:
+      - name: RGB Zone Wall
+        unique_id: rgb_zone_wall
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list | length > 0 }}"
+        state: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list %}
+          {{ z[0].get('on', false) if z else false }}
+        level: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list %}
+          {{ z[0].get('brightness_ha', 0) | int(0) if z else 0 }}
+        rgb: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list %}
+          {% set c = (z[0].get('color', '#000000') | string).replace('#', '') if z else '000000' %}
+          ({{ c[0:2] | int(0, 16) }}, {{ c[2:4] | int(0, 16) }}, {{ c[4:6] | int(0, 16) }})
+        effect: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list %}
+          {{ z[0].get('pattern_name', 'SOLID') if z else 'SOLID' }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on:
+          action: rest_command.smart_rgb_zone_command
+          data: { zone: 0, cmd: ON }
+        turn_off:
+          action: rest_command.smart_rgb_zone_command
+          data: { zone: 0, cmd: OFF }
+        set_level:
+          action: rest_command.smart_rgb_zone_command
+          data: { zone: 0, brightness_ha: "{{ brightness | int(0) }}" }
+        set_rgb:
+          action: rest_command.smart_rgb_zone_command
+          data: { zone: 0, r: "{{ r | int(0) }}", g: "{{ g | int(0) }}", b: "{{ b | int(0) }}" }
+        set_effect:
+          action: rest_command.smart_rgb_zone_command
+          data: { zone: 0, pattern: "{{ effect }}" }
+
+      - name: RGB Zone Monitors
+        unique_id: rgb_zone_monitors
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list | length > 0 }}"
+        state: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list %}
+          {{ z[0].get('on', false) if z else false }}
+        level: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list %}
+          {{ z[0].get('brightness_ha', 0) | int(0) if z else 0 }}
+        rgb: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list %}
+          {% set c = (z[0].get('color', '#000000') | string).replace('#', '') if z else '000000' %}
+          ({{ c[0:2] | int(0, 16) }}, {{ c[2:4] | int(0, 16) }}, {{ c[4:6] | int(0, 16) }})
+        effect: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list %}
+          {{ z[0].get('pattern_name', 'SOLID') if z else 'SOLID' }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, cmd: ON } }
+        turn_off: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, cmd: OFF } }
+        set_level: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, brightness_ha: "{{ brightness | int(0) }}" } }
+        set_rgb: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, r: "{{ r | int(0) }}", g: "{{ g | int(0) }}", b: "{{ b | int(0) }}" } }
+        set_effect: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, pattern: "{{ effect }}" } }
+
+      - name: RGB Zone PC Case
+        unique_id: rgb_zone_pc_case
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list | length > 0 }}"
+        state: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list %}
+          {{ z[0].get('on', false) if z else false }}
+        level: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list %}
+          {{ z[0].get('brightness_ha', 0) | int(0) if z else 0 }}
+        rgb: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list %}
+          {% set c = (z[0].get('color', '#000000') | string).replace('#', '') if z else '000000' %}
+          ({{ c[0:2] | int(0, 16) }}, {{ c[2:4] | int(0, 16) }}, {{ c[4:6] | int(0, 16) }})
+        effect: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list %}
+          {{ z[0].get('pattern_name', 'SOLID') if z else 'SOLID' }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, cmd: ON } }
+        turn_off: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, cmd: OFF } }
+        set_level: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, brightness_ha: "{{ brightness | int(0) }}" } }
+        set_rgb: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, r: "{{ r | int(0) }}", g: "{{ g | int(0) }}", b: "{{ b | int(0) }}" } }
+        set_effect: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, pattern: "{{ effect }}" } }
+
+      - name: RGB Zone Ceiling
+        unique_id: rgb_zone_ceiling
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list | length > 0 }}"
+        state: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list %}
+          {{ z[0].get('on', false) if z else false }}
+        level: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list %}
+          {{ z[0].get('brightness_ha', 0) | int(0) if z else 0 }}
+        rgb: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list %}
+          {% set c = (z[0].get('color', '#000000') | string).replace('#', '') if z else '000000' %}
+          ({{ c[0:2] | int(0, 16) }}, {{ c[2:4] | int(0, 16) }}, {{ c[4:6] | int(0, 16) }})
+        effect: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list %}
+          {{ z[0].get('pattern_name', 'SOLID') if z else 'SOLID' }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, cmd: ON } }
+        turn_off: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, cmd: OFF } }
+        set_level: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, brightness_ha: "{{ brightness | int(0) }}" } }
+        set_rgb: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, r: "{{ r | int(0) }}", g: "{{ g | int(0) }}", b: "{{ b | int(0) }}" } }
+        set_effect: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, pattern: "{{ effect }}" } }
+
+      - name: RGB Zone Moon Globe
+        unique_id: rgb_zone_moon_globe
+        optimistic: true
+        availability: "{{ has_value('sensor.rgb_controller_status') and (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list | length > 0 }}"
+        state: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list %}
+          {{ z[0].get('on', false) if z else false }}
+        level: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list %}
+          {{ z[0].get('brightness_ha', 0) | int(0) if z else 0 }}
+        rgb: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list %}
+          {% set c = (z[0].get('color', '#000000') | string).replace('#', '') if z else '000000' %}
+          ({{ c[0:2] | int(0, 16) }}, {{ c[2:4] | int(0, 16) }}, {{ c[4:6] | int(0, 16) }})
+        effect: >
+          {% set z = (state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list %}
+          {{ z[0].get('pattern_name', 'SOLID') if z else 'SOLID' }}
+        effect_list: "{{ state_attr('sensor.rgb_controller_status', 'patterns') or [] }}"
+        turn_on: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, cmd: ON } }
+        turn_off: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, cmd: OFF } }
+        set_level: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, brightness_ha: "{{ brightness | int(0) }}" } }
+        set_rgb: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, r: "{{ r | int(0) }}", g: "{{ g | int(0) }}", b: "{{ b | int(0) }}" } }
+        set_effect: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, pattern: "{{ effect }}" } }
+
+  - number:
+      - name: RGB Zone Wall Speed
+        unique_id: rgb_zone_wall_speed
+        min: 1
+        max: 200
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list | first | default({})).get('frame_ms', 20) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 0, speed: "{{ value | int }}" } }
+      - name: RGB Zone Monitors Speed
+        unique_id: rgb_zone_monitors_speed
+        min: 1
+        max: 200
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list | first | default({})).get('frame_ms', 20) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, speed: "{{ value | int }}" } }
+      - name: RGB Zone PC Case Speed
+        unique_id: rgb_zone_pc_case_speed
+        min: 1
+        max: 200
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list | first | default({})).get('frame_ms', 20) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, speed: "{{ value | int }}" } }
+      - name: RGB Zone Ceiling Speed
+        unique_id: rgb_zone_ceiling_speed
+        min: 1
+        max: 200
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list | first | default({})).get('frame_ms', 20) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, speed: "{{ value | int }}" } }
+      - name: RGB Zone Moon Globe Speed
+        unique_id: rgb_zone_moon_globe_speed
+        min: 1
+        max: 200
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list | first | default({})).get('frame_ms', 20) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, speed: "{{ value | int }}" } }
+      - name: RGB Zone Wall Count
+        unique_id: rgb_zone_wall_count
+        min: 1
+        max: 600
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 0) | list | first | default({})).get('leds', 1) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 0, count: "{{ value | int }}" } }
+      - name: RGB Zone Monitors Count
+        unique_id: rgb_zone_monitors_count
+        min: 1
+        max: 600
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 1) | list | first | default({})).get('leds', 1) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 1, count: "{{ value | int }}" } }
+      - name: RGB Zone PC Case Count
+        unique_id: rgb_zone_pc_case_count
+        min: 1
+        max: 600
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 2) | list | first | default({})).get('leds', 1) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 2, count: "{{ value | int }}" } }
+      - name: RGB Zone Ceiling Count
+        unique_id: rgb_zone_ceiling_count
+        min: 1
+        max: 600
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 3) | list | first | default({})).get('leds', 1) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 3, count: "{{ value | int }}" } }
+      - name: RGB Zone Moon Globe Count
+        unique_id: rgb_zone_moon_globe_count
+        min: 1
+        max: 600
+        step: 1
+        state: "{{ ((state_attr('sensor.rgb_controller_status', 'zones') or []) | selectattr('id', 'eq', 4) | list | first | default({})).get('leds', 1) }}"
+        set_value: { action: rest_command.smart_rgb_zone_command, data: { zone: 4, count: "{{ value | int }}" } }

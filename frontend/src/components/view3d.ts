@@ -148,6 +148,8 @@ import { lowSyncDelay, MOVE_SYNC_MS } from "../viewer/pace.ts";
 import { floorCounts, floorInfoText, locatedPersons, personLook, personsInRooms, personsShown } from "../presence.ts";
 import { controls, tokens } from "../styles.ts";
 import type { HassEntity, HomeAssistant } from "../types.ts";
+
+declare global { interface Window { __tpSmartRgbScene?: (building: Building, hass: HomeAssistant) => ScenePiece[]; __tpSmartRgbWatched?: (building: Building) => string[] } }
 import { countView, diagnosticsActive, recordFrame, watchDiagnostics } from "../diagnostics.ts";
 import { GUARD_VERSION, gpuSafeMode, noteContextLost } from "../gpu-guard.ts";
 import type { DeviceMarker, FloorplanViewer, FloorStack, PersonPin, RobotInfo, Quality, ScreenState, SoundSource, SurfaceGrab, ViewerStats, WallMode } from "../viewer/viewer3d.ts";
@@ -1350,6 +1352,7 @@ export class Fp3dView3d extends LitElement {
         warnings: this.alertSrc ? alertEntities(this.alertSrc) : [],
         weatherEntityId: this.weatherEntityId,
       });
+      if (typeof window !== "undefined" && window.__tpSmartRgbWatched) this.watched = [...new Set([...this.watched, ...window.__tpSmartRgbWatched(b)])];
       if (anyModule()) this.watched = [...new Set([...this.watched, ...moduleWatched(this.sceneHost(hass, b))])];
       // the helper that picks the style: its change alone redraws the house (#1170)
       const styleHelper = this.styleEntity || b.settings.style_entity;
@@ -1404,7 +1407,10 @@ export class Fp3dView3d extends LitElement {
     this.shownStates = new Map(this.watched.map((id) => [id, hass.states[id]]));
 
     // what the modules add to the stage (Pool Pro: the water, the water in the pipes, the glow of the technical room)
-    this.scene = anyModule() ? moduleScene(this.sceneHost(hass, b)) : [];
+    this.scene = [
+      ...(anyModule() ? moduleScene(this.sceneHost(hass, b)) : []),
+      ...(typeof window !== "undefined" && window.__tpSmartRgbScene ? window.__tpSmartRgbScene(b, hass) : []),
+    ];
     const consumers = findConsumers(hass, b);
     const infra = readInfrastructure(b);
     const infraFurniture=new Set(infra.devices.map(d=>d.furnitureId));

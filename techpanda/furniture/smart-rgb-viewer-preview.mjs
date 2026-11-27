@@ -1,0 +1,84 @@
+﻿import { createServer } from 'node:http';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { extname, join, normalize, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+const root=resolve(import.meta.dirname,'../..');
+const out=resolve(root,'techpanda/furniture/dist/smart-rgb-viewer-previews');
+const packPath=resolve(root,'techpanda/furniture/packs/smart-rgb-lighting.source.json');
+mkdirSync(out,{recursive:true});
+const server=createServer((req,res)=>{const path=normalize(decodeURIComponent(new URL(req.url,'http://x').pathname)).replace(/^([/\\])+/, '');const file=join(root,path);if(!file.startsWith(root)||!existsSync(file)){res.writeHead(404).end();return;}res.writeHead(200,{'content-type':({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'})[extname(file)]??'application/octet-stream'}).end(readFileSync(file));});
+await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+const require=createRequire(resolve(root,'frontend/package.json'));const puppeteer=require('puppeteer-core');
+const candidates=[process.env.CHROME_PATH,'C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].filter(Boolean);const executablePath=candidates.find(existsSync);if(!executablePath)throw new Error('Chrome/Edge not found');
+const browser=await puppeteer.launch({executablePath,headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
+const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
+const errors=[];const failed=[];const lazyRequests=[];page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>failed.push({url:r.url(),error:r.failure()?.errorText}));page.on('request',r=>{if(r.url().includes('neonplan3d-smart-rgb.js'))lazyRequests.push(r.url())});
+await page.goto(`http://127.0.0.1:${server.address().port}/preview/index.html?lang=en`,{waitUntil:'networkidle0'});await page.waitForFunction(()=>window.fp3dPanel?.data?.building, {timeout:30000});
+const pack=JSON.parse(readFileSync(packPath,'utf8'));
+await page.evaluate(async(pack)=>{
+ const panel=window.fp3dPanel, hass=panel.hass, original=hass.callWS.bind(hass);let syntheticBuilding=null;
+ const payload={id:pack.id,name:pack.name,publisher:pack.publisher,licensee:null,release:pack.release,items:pack.items};
+ hass.callWS=async(msg)=>{if(msg.type==='neonplan3d/packs/list')return {packs:[...await original(msg).then(x=>x.packs.filter(p=>p.id!==pack.id)),payload]};if(msg.type==='neonplan3d/building/save'){syntheticBuilding=structuredClone(msg.building);return {revision:2};}if(msg.type==='neonplan3d/building/get'&&syntheticBuilding)return {building:structuredClone(syntheticBuilding),revision:2};return original(msg);};
+ const states={...hass.states};const put=(id,state,attributes={})=>states[id]={entity_id:id,state,attributes,last_changed:new Date().toISOString(),last_updated:new Date().toISOString(),context:{id:''}};
+ put('light.hex_led','on',{brightness:230,rgb_color:[40,205,240],effect:'rainbow',effect_list:['rainbow','solid','confetti']});
+ put('sensor.hex_led_status_raw','true',{power:true,brightness:230,color:'#28CDF0',pattern:'rainbow',mode:'rainbow'});
+ put('input_select.hex_led_pattern','rainbow',{options:['rainbow','solid','rainbow_glitter','confetti','sinelon','juggle','bpm']});put('input_number.hex_led_speed','80',{});put('input_text.hex_led_color','#28CDF0',{});
+ put('light.rgb_lights','on',{brightness:210,rgb_color:[35,185,225],effect:'RAINBOW',effect_list:['SOLID','RAINBOW','CONFETTI']});put('select.rgb_pattern','RAINBOW',{options:['SOLID','RAINBOW','CONFETTI']});
+ const names=['Wall','Monitors','PC Case','Ceiling','Moon Globe'];const counts=[120,90,60,150,30];const zones=[0,1,2,3,4].map(id=>({id,name:names[id],on:id<3,color:['#c742ff','#27e7c6','#48a5ff','#ff9750','#ff49c4'][id],brightness_ha:id<3?210:0,brightness_pct:id<3?82:0,pattern_name:'RAINBOW',frame_ms:70,leds:counts[id],max_leds:600}));
+ put('sensor.rgb_controller_status','online',{ip:'192.0.2.20',patterns:['SOLID','RAINBOW','CONFETTI'],zones});
+ for(const [name,id] of [['wall',0],['monitors',1],['pc_case',2],['ceiling',3],['moon_globe',4]]){put(`light.rgb_zone_${name}`,id<3?'on':'off',{brightness:id<3?210:0,rgb_color:[199,66,255],effect:'RAINBOW',effect_list:['SOLID','RAINBOW','CONFETTI']});put(`number.rgb_zone_${name}_speed`,'70',{});put(`number.rgb_zone_${name}_count`,String(counts[id]),{});}
+ const calls=[];hass.callService=async(...args)=>{calls.push(args);};
+ window.__smartCalls=calls;panel.hass={...hass,states}; await panel.data.reloadPacks();
+ const b=structuredClone(panel.data.building);const item=(id,type,x,z,w,d,h,mount_y,mods)=>({id,type,x,z,rotation:0,w,d,h,variant:null,mount_y,mods});
+ const f0=b.floors[0],f1=b.floors[1];if(!f0||!f1)throw new Error('Demo preview needs its two default floors');
+ const [hexDef,wallDef]=pack.items;
+ const hx=item('qa-hex',`pack:${pack.id}:${hexDef.id}`,3,.05,2.4,.12,2.1,1.65,{[pack.id]:{version:1,kind:'hex',glowIntensity:.75,bindings:{light:'light.hex_led',status:'sensor.hex_led_status_raw',pattern:'input_select.hex_led_pattern',speed:'input_number.hex_led_speed',color:'input_text.hex_led_color'},hex:{cells:[{q:0,r:0},{q:1,r:0},{q:0,r:1}],sideLength:.42,housingWidth:.055,housingDepth:.035,diffuserWidth:.018,connectorGap:.012}}});
+ const wc={version:1,kind:'triangles',glowIntensity:.75,bindings:{light:'light.rgb_lights',pattern:'select.rgb_pattern',status:'sensor.rgb_controller_status'},wall:{rows:4,columns:4,panelSide:.55,panelThickness:.035,panelGap:.008,raisedDepth:.024,grooveSpacing:.035,grooveDirection:0,grooveDepth:.002,raisedPanels:['u:1:1','d:2:2','u:3:1','d:0:2'],edgeZones:{},zones:[{id:0,name:'Wall',entity:'light.rgb_zone_wall',speedEntity:'number.rgb_zone_wall_speed',countEntity:'number.rgb_zone_wall_count'},{id:1,name:'Monitors',entity:'light.rgb_zone_monitors',speedEntity:'number.rgb_zone_monitors_speed',countEntity:'number.rgb_zone_monitors_count'},{id:2,name:'PC Case',entity:'light.rgb_zone_pc_case',speedEntity:'number.rgb_zone_pc_case_speed',countEntity:'number.rgb_zone_pc_case_count'},{id:3,name:'Ceiling',entity:'light.rgb_zone_ceiling',speedEntity:'number.rgb_zone_ceiling_speed',countEntity:'number.rgb_zone_ceiling_count'},{id:4,name:'Moon Globe',entity:'light.rgb_zone_moon_globe',speedEntity:'number.rgb_zone_moon_globe_speed',countEntity:'number.rgb_zone_moon_globe_count'}]}};
+ // assign a representative set of independently controlled edges to each reported zone
+ wc.wall.edgeZones={'u:0:0:0':0,'u:0:0:1':1,'u:1:0:0':2,'u:1:0:1':3,'u:2:0:0':4};
+ const wl=item('qa-wall',`pack:${pack.id}:${wallDef.id}`,8,4.45,3.6,.16,2.4,1.45,{[pack.id]:wc});
+ f0.furniture.push(hx,wl); f1.furniture.push(structuredClone(hx,{transfer:[]})); f1.furniture.at(-1).id='qa-hex-upper';f1.furniture.at(-1).x=7;f1.furniture.at(-1).z=4.4;
+ panel.data.edit(b);
+ window.__setSyntheticStates=(next)=>{panel.hass={...panel.hass,states:{...panel.hass.states,...next}};};
+},pack);
+await page.waitForFunction(()=>window.__tpSmartRgbDraw&&document.querySelector('neonplan3d-panel')?.renderRoot?.querySelector('fp3d-view3d')?.viewer,{timeout:30000}).catch(()=>{});
+await new Promise(r=>setTimeout(r,2000));
+const result=await page.evaluate(()=>{const p=window.fp3dPanel;const v=p.renderRoot.querySelector('fp3d-view3d');const all=p.data.building?.floors.flatMap(f=>f.furniture.filter(x=>x.id.startsWith('qa-')))??[];return {lazy:!!window.__tpSmartRgbDraw,view:!!v,viewer:!!v?.viewer,packs:p.data.packs.map(x=>x.id),models:all.map(f=>({id:f.id,type:f.type,parts:window.__tpSmartRgbDraw?.(f,f.mount_y??1.5,p.hass.states)?.length,mods:!!f.mods})),floors:p.data.building?.floors.map(f=>({id:f.id,name:f.name,items:f.furniture.filter(x=>x.id.startsWith('qa-')).length})),canvas:v?.shadowRoot?.querySelector('canvas')?.toDataURL().length??0}});
+console.log('INIT',JSON.stringify(result));
+if(!result.lazy||!result.viewer||!result.canvas)throw new Error('Production viewer or lazy module did not initialize');
+if(!lazyRequests.length)throw new Error('The production viewer did not request its lazy Smart RGB bundle');
+async function shot(name,run){if(run)await page.evaluate(run);await new Promise(r=>setTimeout(r,1000));await page.screenshot({path:join(out,`${name}.png`)});}
+const focus="(()=>{const v=window.fp3dPanel.renderRoot.querySelector('fp3d-view3d');const c=v.viewer.controls;c.view.target.set(3,2.5,0.1);c.view.radius=4;c.view.phi=1.2;c.view.theta=0.2;v.viewer.invalidate()})()";
+// Select the individual floor and room through the production nav, allowing its camera fit to finish.
+await page.evaluate(()=>{const p=window.fp3dPanel;[...p.renderRoot.querySelectorAll('nav button')].find(b=>b.textContent.trim()==='Erdgeschoss')?.click();});await new Promise(r=>setTimeout(r,900));
+await page.evaluate(()=>{const p=window.fp3dPanel;[...p.renderRoot.querySelectorAll('nav button')].find(b=>b.textContent.trim()==='Essen')?.click();});await new Promise(r=>setTimeout(r,900));await page.evaluate(focus);
+await shot('individual-room-hex-wall-on');
+await page.evaluate(()=>{const s={};for(const id of ['light.hex_led','light.rgb_zone_wall','light.rgb_zone_monitors','light.rgb_zone_pc_case']){const st=window.fp3dPanel.hass.states[id];s[id]={...st,state:'off'}}window.__setSyntheticStates(s);});await new Promise(r=>setTimeout(r,300));await shot('individual-room-hex-wall-off');
+await page.evaluate(()=>{const s={};for(const id of ['light.hex_led','light.rgb_zone_wall','light.rgb_zone_monitors','light.rgb_zone_pc_case']){const st=window.fp3dPanel.hass.states[id];s[id]={...st,state:'on'}}window.__setSyntheticStates(s);});
+await page.evaluate(()=>{const p=window.fp3dPanel;[...p.renderRoot.querySelectorAll('nav button')].find(b=>b.textContent.trim()==='Küche')?.click();});await new Promise(r=>setTimeout(r,900));await shot('individual-room-triangle-on');
+await page.evaluate(()=>{const s={};for(const id of ['light.rgb_zone_wall','light.rgb_zone_monitors','light.rgb_zone_pc_case']){const st=window.fp3dPanel.hass.states[id];s[id]={...st,state:'off'}}window.__setSyntheticStates(s);});await new Promise(r=>setTimeout(r,300));await shot('individual-room-triangle-off');
+// Use the production All floors and Show menu controls for Apart and Stacked.
+await page.evaluate(()=>{const p=window.fp3dPanel;[...p.renderRoot.querySelectorAll('nav button')].find(b=>b.textContent.trim()==='All floors')?.click();});await new Promise(r=>setTimeout(r,900));await page.evaluate(focus);await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('Show'))?.click());
+await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.trim()==='Auseinander')?.click());await new Promise(r=>setTimeout(r,900));await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('Show'))?.click());await page.evaluate(focus);await shot('property-view-apart-off');
+await page.evaluate(()=>{const s={};for(const id of ['light.hex_led','light.rgb_zone_wall','light.rgb_zone_monitors','light.rgb_zone_pc_case']){const st=window.fp3dPanel.hass.states[id];s[id]={...st,state:'on'}}window.__setSyntheticStates(s);});await page.evaluate(focus);await shot('property-view-apart-on');
+await page.evaluate(()=>{const p=window.fp3dPanel;[...p.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('Show'))?.click();[...p.renderRoot.querySelectorAll('button')].find(b=>b.textContent.trim()==='Gestapelt')?.click();});await new Promise(r=>setTimeout(r,900));await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('Show'))?.click());await page.evaluate(focus);await shot('property-view-stacked-on');
+// Open the manager from the actual application and exercise its HA-backed controls against the recording mock.
+await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('Extensions'))?.click());
+await page.waitForFunction(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].some(b=>b.textContent.includes('TechPanda Smart RGB Lighting')),{timeout:15000});
+await page.evaluate(()=>[...window.fp3dPanel.renderRoot.querySelectorAll('button')].find(b=>b.textContent.includes('TechPanda Smart RGB Lighting'))?.click());
+await page.waitForFunction(()=>window.fp3dPanel.renderRoot.querySelector('techpanda-smart-rgb-manager')?.renderRoot?.querySelector('.controls'),{timeout:15000});
+await page.evaluate(()=>{const m=window.fp3dPanel.renderRoot.querySelector('techpanda-smart-rgb-manager');const root=m.renderRoot;[...root.querySelectorAll('.row')].find(b=>b.textContent.includes('Hexagonal RGB Frame'))?.click();[...root.querySelectorAll('button')].find(b=>b.textContent.trim()==='Turn off')?.click();const pattern=[...root.querySelectorAll('label.field')].find(x=>x.textContent.includes('Pattern'))?.querySelector('select');if(pattern){pattern.value='solid';pattern.dispatchEvent(new Event('change',{bubbles:true}));}const brightness=[...root.querySelectorAll('label.slider')].find(x=>x.textContent.includes('Brightness'))?.querySelector('input');if(brightness){brightness.value='128';brightness.dispatchEvent(new Event('change',{bubbles:true}));}const colour=[...root.querySelectorAll('label.field')].find(x=>x.textContent.includes('Solid colour'))?.querySelector('input[type=color]');if(colour){colour.value='#00ff88';colour.dispatchEvent(new Event('change',{bubbles:true}));}});
+await new Promise(r=>setTimeout(r,300));
+const serviceCalls=await page.evaluate(()=>window.__smartCalls.map(([domain,service,data])=>({domain,service,data})));
+const required=[['light','turn_off','light.hex_led'],['input_select','select_option','input_select.hex_led_pattern'],['light','turn_on','light.hex_led'],['input_text','set_value','input_text.hex_led_color']];
+for(const [domain,service,entity] of required)if(!serviceCalls.some(c=>c.domain===domain&&c.service===service&&c.data.entity_id===entity))throw new Error(`Missing expected HA service ${domain}.${service} for ${entity}: ${JSON.stringify(serviceCalls)}`);
+const persist=await page.evaluate(async()=>{const p=window.fp3dPanel,m=p.renderRoot.querySelector('techpanda-smart-rgb-manager');let root=m.renderRoot;[...root.querySelectorAll('.row')].find(b=>b.textContent.includes('Multizone Geometric'))?.click();await new Promise(r=>setTimeout(r,0));root=m.renderRoot;const rows=[...root.querySelectorAll('label.field')].find(x=>x.textContent.includes('Rows'))?.querySelector('input');if(rows){rows.value='5';rows.dispatchEvent(new Event('change',{bubbles:true}));}await p.data.flush();await p.data.reload();const found=p.data.building.floors.flatMap(f=>f.furniture).find(f=>f.id==='qa-wall');return {saved:!!found,rows:found?.mods?.['studio.techpanda.smart_rgb_lighting']?.wall?.rows};});
+if(!persist.saved||persist.rows!==5)throw new Error(`Fixture save/reload failed: ${JSON.stringify(persist)}`);
+await page.evaluate(()=>{const m=window.fp3dPanel.renderRoot.querySelector('techpanda-smart-rgb-manager'),root=m.renderRoot;[...root.querySelectorAll('.row')].find(b=>b.textContent.includes('Multizone Geometric'))?.click();[...root.querySelectorAll('button')].find(b=>b.textContent.trim()==='Turn off zone')?.click();const global=[...root.querySelectorAll('label.field')].find(x=>x.textContent.trim().startsWith('Pattern'))?.querySelector('select');if(global){global.value='SOLID';global.dispatchEvent(new Event('change',{bubbles:true}));}const color=[...root.querySelectorAll('label.field')].find(x=>x.textContent.includes('Zone colour'))?.querySelector('input[type=color]');if(color){color.value='#33AAFF';color.dispatchEvent(new Event('change',{bubbles:true}));}});
+const allCalls=await page.evaluate(()=>window.__smartCalls.map(([domain,service,data])=>({domain,service,data})));
+for(const [domain,service,entity] of [['light','turn_off','light.rgb_zone_wall'],['select','select_option','select.rgb_pattern'],['light','turn_on','light.rgb_zone_wall']])if(!allCalls.some(c=>c.domain===domain&&c.service===service&&c.data.entity_id===entity))throw new Error(`Missing expected wall HA service ${domain}.${service} for ${entity}: ${JSON.stringify(allCalls)}`);
+if(!allCalls.some(c=>c.domain==='light'&&c.service==='turn_on'&&c.data.entity_id==='light.rgb_zone_wall'&&JSON.stringify(c.data.rgb_color)==='[51,170,255]'))throw new Error('Zone colour service payload is incorrect');
+console.log('INTERACTIONS',JSON.stringify({serviceCalls:allCalls,persist}));
+console.log('SCREENSHOTS',out);
+console.log('LAZY_REQUESTS',JSON.stringify(lazyRequests));console.log('ERRORS',JSON.stringify(errors));console.log('FAILED',JSON.stringify(failed));
+await browser.close();server.close();

@@ -1,0 +1,165 @@
+{
+  "status": "runtime viewer rendering fixed and verified with production bundles in synthetic headless Chrome; live Home Assistant/controller acceptance remains unverified",
+  "primary_references": {
+    "hexagonal": "user supplied photo: three connected hollow hexagons, dark housings, segmented rainbow diffusers",
+    "geometric_wall": "user supplied photo: dark triangular acoustic panels, directional grooves, only selected recessed edges lit"
+  },
+  "pack": {
+    "id": "studio.techpanda.smart_rgb_lighting",
+    "release": 1,
+    "schema_version": 1,
+    "executable_module": false
+  },
+  "items": [
+    {
+      "id": "hexagonal_rgb_frame_lights",
+      "name": "Hexagonal RGB Frame Lights",
+      "default_size_m": [
+        2.4,
+        0.12,
+        2.1
+      ],
+      "default_layout": {
+        "kind": "flat_top_axial_hexes",
+        "cells": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "side_length_m": 0.42,
+        "housing_width_m": 0.055,
+        "housing_depth_m": 0.035,
+        "diffuser_width_m": 0.018,
+        "connector_gap_m": 0.012,
+        "dark_connector_joints": true
+      },
+      "rgb": {
+        "entity": "light.hex_led",
+        "status": "sensor.hex_led_status_raw",
+        "pattern": "input_select.hex_led_pattern",
+        "speed": "input_number.hex_led_speed",
+        "solid_color": "input_text.hex_led_color",
+        "patterns_from_controller": [
+          "rainbow",
+          "solid",
+          "rainbow_glitter",
+          "confetti",
+          "sinelon",
+          "juggle",
+          "bpm"
+        ],
+        "solid_color_automation": "existing automation; do not bypass or call the physical controller directly"
+      },
+      "notes": [
+        "Shared hexagon edges become one physical LED bar.",
+        "Photograph crop does not supply actual installation dimensions; item size is an editable design starting point."
+      ]
+    },
+    {
+      "id": "multizone_geometric_rgb_wall_lights",
+      "name": "Multizone Geometric RGB Wall Lights",
+      "default_size_m": [
+        3.6,
+        0.16,
+        2.4
+      ],
+      "default_layout": {
+        "kind": "axial_equilateral_triangle_mosaic",
+        "rows": 4,
+        "columns": 4,
+        "panel_side_m": 0.55,
+        "panel_thickness_m": 0.035,
+        "panel_gap_m": 0.008,
+        "raised_panel_depth_m": 0.024,
+        "groove_spacing_m": 0.035,
+        "groove_direction_degrees": 0,
+        "groove_depth_m": 0.002,
+        "raised_panel_ids": [
+          "u:1:1",
+          "d:2:2",
+          "u:3:1",
+          "d:0:2"
+        ],
+        "illuminated_edges": [
+          "0.5,0.866|1,0",
+          "1,1.7321|1.5,2.5981",
+          "1.5,2.5981|2,3.4641",
+          "2,1.7321|3,1.7321",
+          "2.5,2.5981|3,1.7321",
+          "3,1.7321|3.5,2.5981",
+          "3.5,0.866|4.5,0.866",
+          "4,1.7321|4.5,2.5981",
+          "4.5,2.5981|5,3.4641"
+        ]
+      },
+      "rgb": {
+        "entity": "light.rgb_lights",
+        "pattern": "select.rgb_pattern",
+        "status": "sensor.rgb_controller_status",
+        "status_attributes": [
+          "all",
+          "zones",
+          "patterns"
+        ],
+        "zone_selection": "read actual sensor zones; IDs are the firmware zone indices"
+      },
+      "notes": [
+        "The controller source defines five zones; the visible photo does not establish a one-panel-per-zone mapping.",
+        "Only edges selected by the layout and assigned to a controller zone emit RGB.",
+        "The photo is cropped; the default is a finite visible-style mosaic and does not invent hidden sections."
+      ]
+    }
+  ],
+  "firmware_source": "https://github.com/arslansadiq87/ESP32-Smart-LEDs/tree/main",
+  "firmware_contract": {
+    "status": "GET /api/status",
+    "commands": "POST /api/cmd through Home Assistant rest_command only",
+    "save": "POST /api/save through Home Assistant rest_command only",
+    "zones": [
+      "Wall",
+      "Monitors",
+      "PC Case",
+      "Ceiling",
+      "Moon Globe"
+    ],
+    "zone_command_fields": [
+      "zone",
+      "cmd",
+      "pattern",
+      "brightness_ha",
+      "brightness_pct",
+      "rgb",
+      "r",
+      "g",
+      "b",
+      "hue",
+      "saturation",
+      "speed",
+      "count"
+    ],
+    "animation_speed": {
+      "field": "speed",
+      "min_frame_ms": 1,
+      "max_frame_ms": 200
+    },
+    "internal_brightness_max": 95,
+    "ha_brightness_range": [
+      0,
+      255
+    ],
+    "pattern_count": 37
+  },
+  "runtime_changes": "separate lazy-loaded NeonPlan editor/runtime bundle; native viewer geometry avoids cross-bundle pack registry state; furniture pack contains no executable code",
+  "signed_artifact": "techpanda/furniture/dist/techpanda-smart-rgb-lighting-v1.fp3dpack",
+  "signed_artifact_sha256": "ea083f395350979b46a1fb13e216cd11cdd679746ca1d8b05b9a108bd2acb3a7",
+  "preview_directory": "techpanda/furniture/dist/smart-rgb-previews/"
+}
