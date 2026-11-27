@@ -49,6 +49,17 @@ test("furniture camera lens follows heading, mount height and floor elevation", 
   assert.equal(pose.reach, 12);
 });
 
+test("bullet camera coverage starts at the native lens plane and scales with resized depth", () => {
+  const pose = furnitureCameraPose({ x: 2, z: 3, rotation: 0, floorElevation: 0, mountY: 0, depth: 0.32, itemHeight: 0.12, furnitureType: "pack:studio.techpanda.cctv_network:ip_bullet_camera" }, undefined);
+  assert.equal(pose.x, 2);
+  assert.equal(pose.z, 3 + 0.32 * 0.462);
+  const rotated = furnitureCameraPose({ x: 2, z: 3, rotation: 0, floorElevation: 0, mountY: 0, depth: 0.64, itemHeight: 0.12, furnitureType: "pack:studio.techpanda.cctv_network:analog_bullet_camera" }, { azimuth: 90 });
+  assert.equal(rotated.x, 2 - 0.64 * 0.462);
+  assert.equal(rotated.z, 3);
+  const other = furnitureCameraPose({ x: 2, z: 3, rotation: 0, floorElevation: 0, mountY: 0, depth: 0.32, itemHeight: 0.12 }, undefined);
+  assert.equal(other.z, 3 + 0.32 * 0.31);
+});
+
 test("portable metadata reader tolerates missing and dangling references", () => {
   assert.deepEqual(readInfrastructure(null), { version: 1, devices: [], connections: [] });
   const p = readInfrastructure({ mods: { "techpanda.infrastructure": { version: 1, devices: [{ id: "a", furnitureId: "f", floorId: "g", category: "switch", enabled: true }], connections: [{ id: "x", from: "a", to: "missing", kind: "ethernet", logical: true }] } } });

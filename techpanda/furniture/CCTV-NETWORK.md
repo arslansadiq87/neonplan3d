@@ -3,7 +3,7 @@
 ## Local artifacts
 
 - Furniture source: `packs/cctv-network.source.json`.
-- Signed furniture-only artifact (ignored local output): `dist/cctv-network.source.fp3dpack`.
+- Signed furniture-only artifact (ignored local output): `dist/cctv-network.source.fp3dpack` (release 3, router/AP selection visual fix and router status LEDs; retains release-2 bullet redesign).
 - Optional management module source: `cctv-network.module.js`.
 - Native model previews (ignored local output): `dist/cctv-network-previews/`.
 
@@ -17,6 +17,22 @@ Preview-NeonFurniturePack -Source ./techpanda/furniture/packs/cctv-network.sourc
 ```
 
 The existing TechPanda signing key signs furniture geometry only. The JavaScript module is a separate executable extension and must go through NeonPlan's module import, signature and approval flow as its own artifact; it is deliberately not embedded into the furniture pack. No private key, credentials, passwords or tokens belong in the pack or plan.
+
+## Bullet camera furniture release 2
+
+Release 2 retains pack id `studio.techpanda.cctv_network`, schema version 1, and the existing `analog_bullet_camera` / `ip_bullet_camera` item ids. Both models now use native pack cylinders and boxes for the cylindrical navy housing, front lip, dark lens, subdued IR details, adjustable-looking joint, rear arm and circular mounting plate. Default size is 120 × 290 × 120 mm. Existing placed furniture ids and infrastructure metadata are unchanged; newly signed furniture definitions resolve through the same item ids.
+
+Native-renderer screenshots are written to ignored local output `dist/cctv-network-previews/`, with `...--<item>-front.png`, `side.png`, `rear.png`, `iso.png`, `wall.png`, `ceiling.png` and `coverage.png` for each bullet camera. The coverage preview arrow starts at the calculated lens plane. The shared camera-pose helper has a camera-item-specific 46.2%-of-depth lens anchor for these two bullet ids only; configured azimuth, FOV, vertical FOV, tilt, range and elevation remain unchanged. Dome, PTZ and other cameras retain the prior anchor rule. This small runtime change is listed in `upstream-modifications.json` and requires a separately rebuilt integration artifact before users receive updated coverage alignment; the furniture pack alone updates model geometry.
+
+Router/AP selection previews use the `...--router-unselected.png`, `router-selected.png`, `access-point-unselected.png`, `access-point-selected.png`, `router-led-details.png`, `router-in-scene-selected.png` and `access-point-in-scene-selected.png` names.
+
+The pack retains NeonPlan's existing furniture placement and rotation behavior. The model has a rear mounting plate and arm oriented along local depth. Surface-specific wall/ceiling attachment behavior is controlled by NeonPlan's single existing pack `mount` mode; this model remains in the prior floor-placeable mode, so wall/ceiling appearance is shown in the native preview but automatic wall/ceiling attachment is not claimed by this pack-only update.
+
+## Router and access point furniture release 3
+
+Release 3 retains the same pack and furniture item ids. The router has three small cyan/green/blue front-edge status LEDs in its native pack geometry. The 3D editor still selects both router and access point normally, but skips their generic selected-furniture wireframe ghost. This is a targeted runtime renderer change in `frontend/src/viewer/viewer3d.ts`; hit testing, selection state, movement, rotation, resizing, property editing, duplication and deletion are unchanged. The signed furniture pack updates the LED geometry; the selection-cage suppression requires a separately rebuilt integration bundle. Other furniture keeps its existing selection box.
+
+The built-in native furniture preview shows unselected geometry. For visual selection proof use the production 3D editor in Furnishing mode: select **Wi-Fi Router** and **Wireless Access Point**; their models remain editable without the cyan selection cage. Their existing hit testing and edit controls are not changed. The router's three LED discs are static colored indicators (not telemetry-driven or animated). The pack uses the existing floor-placeable mount mode; no automatic wall/ceiling mounting changes are included.
 
 ## Current implementation
 

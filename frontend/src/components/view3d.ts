@@ -1417,7 +1417,7 @@ export class Fp3dView3d extends LitElement {
       const floor = b.floors.find((f) => f.id === match.floorId);
       const furniture = floor?.furniture.find((f) => f.id === match.furnitureId);
       if (!floor || !furniture) return marker;
-      const pose = furnitureCameraPose({ x: furniture.x, z: furniture.z, rotation: furniture.rotation, floorElevation: floor.elevation, mountY: furniture.mount_y ?? 0, depth: furniture.d, itemHeight: furniture.h }, match.camera);
+      const pose = furnitureCameraPose({ x: furniture.x, z: furniture.z, rotation: furniture.rotation, floorElevation: floor.elevation, mountY: furniture.mount_y ?? 0, depth: furniture.d, itemHeight: furniture.h, furnitureType: furniture.type }, match.camera);
       return { ...marker, floorId: floor.id, x: pose.x, z: pose.z, y: pose.y, rotation: pose.rotation, fov: pose.fov, vFov: pose.vFov, reach: pose.reach, tilt: pose.tilt, furnitureId: furniture.id, pack: furniture.type, size: [furniture.w, furniture.d, furniture.h] as [number, number, number], base: furniture.mount_y ?? 0, ownLook: true, cameraEntity: marker.id, cameraCoverage: true, coverageColor: match.camera?.coverageColor ?? "#36c6d2", coverageOpacity: Math.max(0, Math.min(1, match.camera?.coverageOpacity ?? 0.2)), projectGround: match.camera?.projectGround !== false, cone: true };
     });
     const furniture = this.furnitureMarkers(hass, b, new Set(deviceMarkers.map((m) => m.id)), new Set(consumers.map((c) => c.powerEntity)));
@@ -3108,7 +3108,7 @@ export class Fp3dView3d extends LitElement {
         const linked = this.furnitureLinks.get(f.id);
         const infraDevice = infraByFurniture.get(f.id);
         if (infraDevice?.enabled !== false && infraDevice && (infraDevice.category === "camera_analog" || infraDevice.category === "camera_ip")) {
-          const pose = furnitureCameraPose({ x: f.x, z: f.z, rotation: f.rotation, floorElevation: floor.elevation, mountY: f.mount_y ?? 0, depth: f.d, itemHeight: f.h }, infraDevice.camera);
+          const pose = furnitureCameraPose({ x: f.x, z: f.z, rotation: f.rotation, floorElevation: floor.elevation, mountY: f.mount_y ?? 0, depth: f.d, itemHeight: f.h, furnitureType: f.type }, infraDevice.camera);
           const cameraEntity = infraDevice.bindings?.camera;
           const motionState = infraDevice.bindings?.motion ? hass.states[infraDevice.bindings.motion] : undefined;
           const availability = infraDevice.bindings?.availability ? hass.states[infraDevice.bindings.availability] : undefined;

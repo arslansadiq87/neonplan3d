@@ -66,6 +66,11 @@ export type { OpeningState } from "./openings.ts";
 export type Quality = "auto" | "low" | "high";
 export type WallMode = "auto" | "cut";
 
+/** Router/AP selection remains active; only their distracting generic wireframe ghost is suppressed. */
+export function furnitureSelectionGhost(type: string): boolean {
+  return type !== "pack:studio.techpanda.cctv_network:router" && type !== "pack:studio.techpanda.cctv_network:access_point";
+}
+
 export interface ViewerOptions {
   quality?: Quality;
   /** Zoom style (test): how far the blend from the far look to the near style has come (0–1), for the page's background. */
@@ -5588,6 +5593,7 @@ export class FloorplanViewer {
       const fv = this.floors.find((q) => q.floor.furniture.some((m) => m.id === id));
       const f = fv?.floor.furniture.find((m) => m.id === id);
       if (!fv || !f) continue;
+      if (!furnitureSelectionGhost(f.type)) continue;
       at ??= fv;
       this.ghostBox(lines, fv, f, id === this.selectedFurniture ? new Color(0.25, 0.9, 1) : new Color(1, 0.71, 0.28));
     }

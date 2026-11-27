@@ -199,10 +199,12 @@ export function cameraCoverageFootprint(camera: InfrastructureDevice) {
   return { radius, near: Math.max(0, Math.min(radius, c.minRange ?? 0)), halfAngle: horizontal / 2, azimuth: c.azimuth ?? 0, tilt: Math.max(-90, Math.min(90, c.tilt ?? 20)), height: Math.max(0, c.height ?? 2.4), estimated: true as const };
 }
 
-export function furnitureCameraPose(input: { x: number; z: number; rotation: number; floorElevation: number; mountY: number; depth: number; itemHeight: number }, camera: Pick<NonNullable<InfrastructureDevice["camera"]>, "azimuth" | "height" | "tilt" | "hFov" | "vFov" | "maxRange"> | undefined) {
+export function furnitureCameraPose(input: { x: number; z: number; rotation: number; floorElevation: number; mountY: number; depth: number; itemHeight: number; furnitureType?: string }, camera: Pick<NonNullable<InfrastructureDevice["camera"]>, "azimuth" | "height" | "tilt" | "hFov" | "vFov" | "maxRange"> | undefined) {
   const azimuth = camera?.azimuth ?? input.rotation;
   const a = azimuth * Math.PI / 180;
-  const lensOffset = Math.max(0.025, Math.min(0.18, input.depth * 0.31));
+  const lensOffset = input.furnitureType?.endsWith(":analog_bullet_camera") || input.furnitureType?.endsWith(":ip_bullet_camera")
+    ? input.depth * 0.462
+    : Math.max(0.025, Math.min(0.18, input.depth * 0.31));
   return {
     x: input.x - Math.sin(a) * lensOffset,
     z: input.z + Math.cos(a) * lensOffset,

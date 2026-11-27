@@ -267,19 +267,31 @@
     },
     {
       "path": "frontend/src/infrastructure.ts",
-      "change": "Estimate cable path lengths from actual floor elevations, produce route segments, recognize equipment item ids stored in signed furniture pack types, and validate switch port/PoE and recorder channel allocations.",
+      "change": "Estimate cable path lengths from actual floor elevations, produce route segments, recognize equipment item ids stored in signed furniture pack types, and validate switch port/PoE and recorder channel allocations. Bullet CCTV furniture coverage anchors now start at the redesigned analog/IP bullet lens plane; other camera models keep the existing pose rule.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
     {
       "path": "frontend/src/components/view3d.ts",
-      "change": "Forward independent Wi-Fi and network-connection visibility preferences to the native viewer.",
+      "change": "Forward independent Wi-Fi and network-connection visibility preferences to the native viewer. Pass the furniture type into the camera pose helper for bullet lens alignment.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
     {
       "path": "frontend/src/panel.ts",
       "change": "Add persistent, default-off Show controls for estimated Wi-Fi and network connection geometry.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Suppress the generic selected-furniture wireframe ghost for only the TechPanda Wi-Fi router and access point pack item types; furniture selection, hit testing and editing remain active.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d-selection.test.ts",
+      "change": "Cover the targeted furniture selection ghost policy: router and access point are suppressed while other furniture types keep their wireframe.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }
