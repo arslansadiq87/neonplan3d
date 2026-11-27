@@ -1,6 +1,6 @@
 # NeonPlan 3D v4.0.2.4b4 testing prerelease
 
-Unpublished testing prerelease based on upstream `v4.0.2`, continuing the TechPanda `v4.0.2.4b3` line. Stable rollback remains `v4.0.2.3`. The verified implementation is committed and pushed; this prerelease remains unpublished.
+Published testing prerelease based on upstream `v4.0.2`, continuing the TechPanda `v4.0.2.4b3` line. Stable rollback remains `v4.0.2.3`. This is a testing prerelease, not a stable release.
 
 ## Included
 
@@ -22,7 +22,7 @@ Unpublished testing prerelease based on upstream `v4.0.2`, continuing the TechPa
 - HACS ZIP rebuilt from official upstream `v4.0.2` plus inventoried downstream overlays. It contains 84 root files including `frontend/neonplan3d-smart-rgb.js`; POSIX paths, extraction inventory and hashes passed local verification. ZIP SHA-256: `1fe7681926351f9777d6bd61cb56662a6b708ada918b8dfb4827bd23bb58783e`.
 - Optional HA examples ZIP SHA-256: `8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd`. All three asset hashes are in `techpanda/dist/SHA256SUMS-v4.0.2.4b4.txt`.
 - Home Assistant behavior was simulated only. Live HA entities, controller API behavior and physical light output were not tested. No HA YAML was installed; no HA configuration, plan or service was changed.
-- GitHub CI passed on commit `4ecb9152fa00d4af96e6f378f05f1f31102a1ad8`, run [46072872848](https://github.com/arslansadiq87/neonplan3d/actions/runs/46072872848). Frontend regression/typecheck/build freshness, Linux archive validation, Python lint/mypy, Home Assistant pytest and signing-key registry checks all passed. This prerelease has not been published.
+- GitHub CI passed on commit `b67f32e816416cc01afcf24324c3c201f8e6839e`, run [46073140062](https://github.com/arslansadiq87/neonplan3d/actions/runs/46073140062). Frontend regression/typecheck/build freshness, Linux archive validation, Python lint/mypy, Home Assistant pytest and signing-key registry checks all passed. This prerelease is published for testing.
 
 ## Local artifacts
 
@@ -31,4 +31,4 @@ Unpublished testing prerelease based on upstream `v4.0.2`, continuing the TechPa
 - Optional HA examples: `techpanda/dist/techpanda-smart-rgb-ha-examples.zip`.
 - Checksums: `techpanda/dist/SHA256SUMS-v4.0.2.4b4.txt`.
 
-Do not publish, deploy through SSH, install optional HA YAML, operate physical lights or restart Home Assistant without explicit approval.
+Do not deploy through SSH, install optional HA YAML, operate physical lights or restart Home Assistant without explicit approval.
