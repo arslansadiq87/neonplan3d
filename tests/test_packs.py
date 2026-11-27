@@ -17,6 +17,7 @@ import voluptuous as vol
 
 from custom_components.neonplan3d import packs
 from custom_components.neonplan3d.const import DOMAIN
+from tests.test_init import BUILDING
 
 PAYLOAD = {
     "format": "fp3dpack",
@@ -170,6 +171,64 @@ async def test_import_list_and_remove(hass: HomeAssistant, hass_ws_client, monke
     assert (await client.receive_json())["success"]
     await client.send_json_auto_id({"type": "neonplan3d/packs/list"})
     assert (await client.receive_json())["result"]["packs"] == []
+
+
+async def test_water_pack_release_update_preserves_placed_tank(hass: HomeAssistant, hass_ws_client, monkeypatch) -> None:
+    """Updating a furniture-only pack replaces its catalog entry without rewriting saved plans."""
+    private, keys = _key()
+    monkeypatch.setattr(packs, "PACK_PUBLIC_KEYS", keys)
+    await async_setup_component(hass, "http", {})
+    entry = MockConfigEntry(domain=DOMAIN, data={})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_ws_client(hass)
+
+    tank = copy.deepcopy(PAYLOAD["items"][0])
+    tank["id"] = "rectangular_water_tank"
+    tank["slots"] = [{"id": "level", "name": {"en": "Water level"}, "domains": ["sensor"]}]
+    payload_v2 = {**copy.deepcopy(PAYLOAD), "id": "studio.techpanda.water_tanks", "name": "TechPanda Water Tanks", "release": 2, "items": [tank]}
+    await client.send_json_auto_id({"type": "neonplan3d/packs/import", "pack": _sign(private, keys, payload_v2)})
+    assert (await client.receive_json())["success"]
+
+    building = copy.deepcopy(BUILDING)
+    placed = {
+        "id": "roof-tank-existing",
+        "type": "pack:studio.techpanda.water_tanks:rectangular_water_tank",
+        "x": 2.4,
+        "z": 1.8,
+        "rotation": 90,
+        "w": 2.4,
+        "d": 1.8,
+        "h": 1.75,
+        "variant": None,
+        "mount_y": 3.35,
+        "binds": {"level": "sensor.roof_tank"},
+    }
+    building["floors"][0]["furniture"] = [placed]
+    await client.send_json_auto_id({"type": "neonplan3d/building/save", "building": building})
+    assert (await client.receive_json())["success"]
+
+    cylinder = {**copy.deepcopy(tank), "id": "cylindrical_water_tank", "size": [1.2, 1.2, 1.8]}
+    ro_plant = {**copy.deepcopy(tank), "id": "ro_plant", "size": [1.8, 0.9, 1.35]}
+    payload_v3 = {**payload_v2, "release": 3, "items": [tank, cylinder, ro_plant]}
+    await client.send_json_auto_id({"type": "neonplan3d/packs/import", "pack": _sign(private, keys, payload_v3)})
+    imported = await client.receive_json()
+    assert imported["success"]
+    await hass.async_block_till_done()
+
+    await client.send_json_auto_id({"type": "neonplan3d/packs/list"})
+    catalog = (await client.receive_json())["result"]["packs"]
+    assert len(catalog) == 1
+    assert catalog[0]["id"] == "studio.techpanda.water_tanks"
+    assert catalog[0]["release"] == 3
+    assert {item["id"] for item in catalog[0]["items"]} == {"rectangular_water_tank", "cylindrical_water_tank", "ro_plant"}
+
+    await client.send_json_auto_id({"type": "neonplan3d/building/get"})
+    saved = (await client.receive_json())["result"]["building"]["floors"][0]["furniture"][0]
+    assert saved["type"] == placed["type"]
+    assert [saved[key] for key in ("w", "d", "h", "mount_y")] == [2.4, 1.8, 1.75, 3.35]
+    assert saved["binds"] == {"level": "sensor.roof_tank"}
 
 
 async def test_module_code_runs_only_after_an_admin_approved_it(

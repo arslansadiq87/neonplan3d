@@ -1,5 +1,5 @@
 {
-  "status": "rectangular design complete; cylindrical sibling not implemented",
+  "status": "rectangular design retained unchanged in water systems pack release 3; cylindrical tank added as a sibling item",
   "source": "techpanda/furniture/packs/water-tanks.source.json",
   "pack_id": "studio.techpanda.water_tanks",
   "item_id": "rectangular_water_tank",
@@ -23,5 +23,6 @@
     "live_binding": "level",
     "pump_control": false
   },
-  "future_pack_extension": "Add a separate cylindrical item to the same pack's items array."
+  "future_pack_extension": "Cylindrical Water Tank and RO Plant are implemented in the same water systems pack release 3.",
+  "pack_release": 3
 }

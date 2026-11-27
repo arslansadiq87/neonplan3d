@@ -1,25 +1,54 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { bindValue, liveGroups } from "../../frontend/src/live-parts.ts";
 import { fitParts } from "../../frontend/src/pack-scale.ts";
+import { emptyBuilding, newFloor, type Furniture } from "../../frontend/src/model.ts";
 import { furnitureSize, packType, setPacks } from "../../frontend/src/packs.ts";
 import type { PackItem } from "../../frontend/src/packs.ts";
 import { GeoBuffer, LineBuffer } from "../../frontend/src/viewer/geo.ts";
 import { pushFurniture, pushPackLive } from "../../frontend/src/viewer/furniture.ts";
-import type { Furniture } from "../../frontend/src/model.ts";
 
 const source = JSON.parse(readFileSync(new URL("./packs/water-tanks.source.json", import.meta.url), "utf8"));
 const pack = { id: source.id, name: source.name, items: source.items };
-const item = source.items[0] as PackItem;
+const item = source.items.find((candidate: { id: string }) => candidate.id === "rectangular_water_tank") as PackItem;
+const cylindrical = source.items.find((candidate: { id: string }) => candidate.id === "cylindrical_water_tank") as PackItem;
+const roPlant = source.items.find((candidate: { id: string }) => candidate.id === "ro_plant") as PackItem;
 const type = packType(pack.id, item.id);
 
-test("style update advances the pack release while preserving placed furniture identity", () => {
-  assert.equal(source.release, 2);
+test("water system pack adds new ids while preserving the rectangular tank identity", () => {
+  assert.equal(source.release, 3);
   assert.equal(source.id, "studio.techpanda.water_tanks");
   assert.equal(item.id, "rectangular_water_tank");
   assert.deepEqual(item.slots?.map((slot: { id: string }) => slot.id), ["level"]);
   assert.equal(type, "pack:studio.techpanda.water_tanks:rectangular_water_tank");
+  assert.equal(
+    createHash("sha256").update(JSON.stringify(item)).digest("hex"),
+    "b6cb01ef96423b5642113098c21b29cabc2593c9eb3577260931bc9982c90dcc",
+    "the existing rectangular tank definition must remain unchanged",
+  );
+  assert.deepEqual(source.items.map((entry: { id: string }) => entry.id), ["rectangular_water_tank", "cylindrical_water_tank", "ro_plant"]);
+  assert.equal(packType(pack.id, cylindrical.id), "pack:studio.techpanda.water_tanks:cylindrical_water_tank");
+  assert.equal(packType(pack.id, roPlant.id), "pack:studio.techpanda.water_tanks:ro_plant");
+});
+
+test("existing placed item types and unrelated plan metadata survive the normal JSON save/reload round-trip", () => {
+  const building = emptyBuilding();
+  const roof = newFloor("roof", "Roof", 3.35);
+  roof.furniture = [item, cylindrical, roPlant].map((packItem, index) => ({
+    id: `placed-${index}`, type: packType(pack.id, packItem.id), x: index, z: 0, rotation: 0,
+    w: packItem.size[0], d: packItem.size[1], h: packItem.size[2], variant: null, mount_y: 0,
+  } as Furniture));
+  building.floors = [roof];
+  building.mods = { "techpanda.cctv_network": { connections: [{ id: "keep-me" }] } } as never;
+  const restored = JSON.parse(JSON.stringify(building));
+  assert.deepEqual(restored.floors[0].furniture.map((f: Furniture) => f.type), [
+    "pack:studio.techpanda.water_tanks:rectangular_water_tank",
+    "pack:studio.techpanda.water_tanks:cylindrical_water_tank",
+    "pack:studio.techpanda.water_tanks:ro_plant",
+  ]);
+  assert.deepEqual(restored.mods, building.mods);
 });
 
 test("tank uses native defaults and independently resizes all three dimensions", () => {
@@ -74,4 +103,48 @@ test("native furniture geometry honors mounting elevation and rotation", () => {
     const lifted = render(make(0, elevation));
     assert.ok(Math.abs(Math.min(...lifted.filter((_, i) => i % 3 === 1)) - elevation) < 1e-5);
   }
+});
+
+test("cylindrical tank keeps circular cylinder geometry and supports percentage level binding", () => {
+  setPacks([pack]);
+  assert.deepEqual(furnitureSize(packType(pack.id, cylindrical.id)), [1.2, 1.2, 1.8]);
+  assert.deepEqual(cylindrical.slots?.map((slot: { id: string; domains: string[] }) => [slot.id, slot.domains]), [["level", ["sensor"]]]);
+  const shell = cylindrical.parts.find((part) => part.shape === "cyl" && part.y > 0.05)!;
+  assert.equal(shell.w, shell.d);
+  const level = cylindrical.parts.find((part) => part.bind?.kind === "level")!;
+  assert.equal(level.bind?.slot, "level");
+  for (const [state, expected] of [["0", 0], ["25", 0.25], ["50", 0.5], ["75", 0.75], ["100", 1]] as const) {
+    assert.equal(bindValue("level", { entity_id: "sensor.tank", state, attributes: { unit_of_measurement: "%" } }), expected);
+  }
+  for (const state of ["unknown", "unavailable"]) assert.equal(bindValue("level", { entity_id: "sensor.tank", state, attributes: {} }), 0);
+  for (const [w, d, h] of [[1.8, 1.8, 1.8], [1.2, 1.2, 2.3], [1.5, 1.5, 1.8]] as const) {
+    const fill = fitParts(cylindrical, w, d, h).find((part) => part.bind?.kind === "level")!;
+    assert.ok(fill.w > 0 && fill.d > 0 && fill.h > 0);
+  }
+  const rendered = new GeoBuffer();
+  const live = pushPackLive(rendered, cylindrical, 1.2, 1.2, 1.8, "level|level|||", {}, new LineBuffer());
+  assert.ok(live && rendered.count > 0);
+});
+
+test("RO plant has readable native geometry, editable dimensions, rotation and mounting elevation", () => {
+  setPacks([pack]);
+  const roType = packType(pack.id, roPlant.id);
+  assert.deepEqual(furnitureSize(roType), [1.8, 0.9, 1.35]);
+  assert.ok(roPlant.parts.length <= 60);
+  assert.ok(roPlant.parts.some((part) => part.shape === "cyl" && part.axis === "x"));
+  assert.ok(roPlant.parts.some((part) => part.shape === "box"));
+  const make = (rotation: number, mount_y: number): Furniture => ({
+    id: "ro", type: roType, x: 0, z: 0, rotation, w: 2.2, d: 1.1, h: 1.6, variant: null, mount_y,
+  } as Furniture);
+  const render = (f: Furniture) => {
+    const buffer = new GeoBuffer();
+    pushFurniture(buffer, new LineBuffer(), new GeoBuffer(), f, f.mount_y ?? 0, true);
+    return buffer.p;
+  };
+  const base = render(make(0, 0));
+  assert.ok(base.length > 0);
+  assert.notDeepEqual(base, render(make(90, 0)));
+  const lifted = render(make(0, 3.35));
+  const minY = Math.min(...lifted.filter((_, i) => i % 3 === 1));
+  assert.ok(minY >= 3.35 && minY < 3.45);
 });

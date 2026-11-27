@@ -1,0 +1,69 @@
+{
+  "status": "water systems pack release 3",
+  "source": "techpanda/furniture/packs/water-tanks.source.json",
+  "pack_id": "studio.techpanda.water_tanks",
+  "release": 3,
+  "items": [
+    {
+      "item_id": "rectangular_water_tank",
+      "name": "Rectangular Water Tank",
+      "status": "existing definition unchanged",
+      "default_size_m": [
+        2.0,
+        1.5,
+        1.5
+      ],
+      "level_entity_slot": "level"
+    },
+    {
+      "item_id": "cylindrical_water_tank",
+      "name": "Cylindrical Water Tank",
+      "default_size_m": [
+        1.2,
+        1.2,
+        1.8
+      ],
+      "geometry": [
+        "native vertical cylinders",
+        "stepped lid and access hatch",
+        "feed and outlet stubs",
+        "optional percentage level window"
+      ],
+      "level_entity_slot": "level",
+      "mount": "floor",
+      "scaling": "circular cylinders use the smaller horizontal dimension as their diameter; height scales independently"
+    },
+    {
+      "item_id": "ro_plant",
+      "name": "RO Plant",
+      "default_size_m": [
+        1.8,
+        0.9,
+        1.35
+      ],
+      "geometry": [
+        "base skid",
+        "three pre-filter housings",
+        "two horizontal membrane housings",
+        "pump and motor",
+        "control enclosure",
+        "feed/product/reject pipe stubs"
+      ],
+      "mount": "floor",
+      "slots": []
+    }
+  ],
+  "water_level": {
+    "entity_domain": "sensor",
+    "states": [
+      0,
+      25,
+      50,
+      75,
+      100
+    ],
+    "unknown_fallback": "NeonPlan native level-binding zero fallback; unbound geometry remains in its native rest pose"
+  },
+  "runtime_changes": false,
+  "signed_artifact": "techpanda/furniture/dist/techpanda-water-tanks-v3.fp3dpack"
+}
