@@ -8,7 +8,7 @@
     "previous_downstream_version":  "4.0.2.4b3",
     "downstream_version":  "4.0.2.4b4",
     "release_tag":  "v4.0.2.4b4",
-    "release_status":  "testing_prerelease_prepared_pending_ci",
+    "release_status":  "testing_prerelease_prepared_ci_passed",
     "assets_sha256":  {
                           "neonplan3d.zip":  "1fe7681926351f9777d6bd61cb56662a6b708ada918b8dfb4827bd23bb58783e",
                           "techpanda-smart-rgb-ha-examples.zip":  "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd",
