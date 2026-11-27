@@ -314,6 +314,12 @@
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
     {
+      "path": "frontend/src/module-scene.ts",
+      "change": "Allow explicitly narrow module line widths so animated RGB flow ribbons can match physical LED strips instead of using the much wider energy-cable minimum.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
       "path": "frontend/src/components/view3d.ts",
       "change": "Expose refreshFurniture() to rebuild the native viewer geometry for the current shown plan after an isolated lazy furniture renderer registers, bypassing same-plan-key update suppression without changing plan data.",
       "official_keys_preserved": [],
@@ -327,7 +333,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-runtime.ts",
-      "change": "Render only explicitly configured thin RGB wall strips through native viewer geometry buffers; align the lazily generated animated flow with physical LED centerlines and native wall mounting. Keep dark housings visible against dark walls. Unbound, missing, unavailable, off and zero-brightness states remain dark; only powered-on non-solid effects animate. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
+      "change": "Render only explicitly configured thin RGB wall strips through native viewer geometry buffers; align the lazily generated, narrow animated flow with physical LED centerlines and native wall mounting. Keep switched-off fixtures neutral charcoal. Unbound, missing, unavailable, off and zero-brightness states remain dark; only powered-on non-solid effects animate. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },

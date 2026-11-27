@@ -36,9 +36,10 @@ test("hex renderer preserves open frames, shares common sides and follows HA pow
   assert.equal(faces.filter(face => face.color === "#800000").length, edges.length * 10);
   assert.ok(faces.every(face => face.a[1] >= 1.799));
   const off = drawSmartRgb(item, 1.8, { "light.hex_led": state("light.hex_led", "off") })!;
-  const offDiffusers = off.filter(face => face.color !== "#172432" && face.color !== "#263c50");
+  const offDiffusers = off.filter(face => face.color !== "#24282e" && face.color !== "#292d33");
   assert.ok(offDiffusers.length > 0 && offDiffusers.every(face => Math.max(...face.color.slice(1).match(/../g)!.map(part => parseInt(part, 16))) <= 24));
-  assert.ok(off.some(face => face.color === "#172432"));
+  assert.ok(off.every(face => ["#24282e", "#292d33", "#080808"].includes(face.color)));
+  assert.ok(off.some(face => face.color === "#24282e"));
   const unavailable = drawSmartRgb(item, 1.8, { "light.hex_led": state("light.hex_led", "unavailable") })!;
   assert.ok(unavailable.every(face => face.color !== "#800000"));
 });
@@ -53,11 +54,11 @@ test("wall renderer emits only configured LED edges with no visible triangular c
   const faces = drawSmartRgb(item, 1.8, active)!;
   assert.equal(faces.length, 20); // one thin rail and one diffuser bar
   assert.equal(faces.filter(face => face.color === "#00ff00").length, 10);
-  assert.ok(faces.some(face => face.color === "#344b61"));
+  assert.ok(faces.some(face => face.color === "#24282e"));
   assert.ok(faces.every(face => !["#252b32", "#2e343b", "#333a43", "#39414a", "#12171d", "#505860"].includes(face.color)));
   const off = drawSmartRgb(item, 1.8, { "sensor.rgb_controller_status": state("sensor.rgb_controller_status", "online", { zones: [{ id: 0, on: false, color: "#00ff00", brightness_ha: 255 }] }) })!;
   assert.ok(!off.some(face => face.color === "#00ff00"));
-  assert.ok(off.some(face => face.color === "#344b61"));
+  assert.ok(off.some(face => face.color === "#24282e"));
   assert.equal(off.length, 20);
 });
 
@@ -81,7 +82,7 @@ test("lazy viewer renderer draws installed pack items without a shared main-bund
   setPacks([]); // the independently bundled lazy module starts with its own empty pack registry
   const faces = drawSmartRgb(item, 1.8, { "light.hex_led": state("light.hex_led", "on", { rgb_color: [40, 205, 240], brightness: 255 }) });
   assert.ok(faces && faces.length > 100);
-  assert.ok(faces.some(face => face.color === "#172432"));
+  assert.ok(faces.some(face => face.color === "#24282e"));
   setPacks([pack]);
 });
 
@@ -115,6 +116,7 @@ test("hex animated flow aligns to the physical LED faces and uses native wall mo
     for (const line of lines) {
       assert.equal(line.kind, "line");
       if (line.kind !== "line") continue;
+      assert.equal(line.width, 0.25);
       assert.ok(line.points[0][1] > base);
       for (const point of [line.points[0], line.points.at(-1)!]) {
         const closest = Math.min(...endpoints.flatMap(pair => pair.map(vertex => pointDistance(vertex, point))));
@@ -136,7 +138,7 @@ test("solid, off, unavailable and stale global multizone states do not animate o
   assert.equal(smartRgbScene(plan(item), home(stale)).length, 0);
   const off = { "light.rgb_lights": state("light.rgb_lights", "off"), "sensor.rgb_controller_status": online };
   assert.equal(smartRgbScene(plan(item), home(off)).length, 0);
-  assert.ok(drawSmartRgb(item, 1.8, off)!.every(face => face.color !== "#33aaff"));
+  assert.ok(drawSmartRgb(item, 1.8, off)!.every(face => ["#24282e", "#080808"].includes(face.color)));
   const zero = { "sensor.rgb_controller_status": state("sensor.rgb_controller_status", "online", { zones: [{ id: 0, on: true, color: "#33aaff", brightness_ha: 0, pattern_name: "RAINBOW" }] }) };
   assert.equal(smartRgbScene(plan(item), home(zero)).length, 0);
 });
@@ -150,8 +152,8 @@ test("wall LED strips and animated flows use the same wall plane and configured 
   const lines = smartRgbScene(plan(item, 3.2), home(states));
   assert.equal(lines.length, 1);
   assert.equal(faces.filter(face => face.color === "#28cdf0").length, 80);
-  assert.ok(faces.filter(face => face.color === "#111923").every(face => [face.a, face.b, face.c].every(point => point[2] > item.z)), "strips must sit on the room-facing mounting surface");
-  const line = lines[0]; assert.equal(line.kind, "line"); if (line.kind !== "line") return;
+  assert.ok(faces.filter(face => face.color === "#24282e").every(face => [face.a, face.b, face.c].every(point => point[2] > item.z)), "strips must sit on the room-facing mounting surface");
+  const line = lines[0]; assert.equal(line.kind, "line"); if (line.kind !== "line") return; assert.equal(line.width, 0.25);
   for (const point of [line.points[0], line.points.at(-1)!]) {
     const closest = Math.min(...endpoints.flatMap(pair => pair.map(vertex => pointDistance(vertex, point))));
     assert.ok(closest < 0.001, `wall animated strip diverged from its physical LED centerline by ${closest}m; point=${point.join(",")}; endpoints=${JSON.stringify(endpoints)}`);

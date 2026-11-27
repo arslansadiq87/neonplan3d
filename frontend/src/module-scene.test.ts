@@ -36,7 +36,11 @@ test("a small curve: the lowest value at the bottom, the highest at the top, spr
   assert.equal(sparkPoints([2, 2], 10, 10), "0,9 10,9");
 });
 
-test("a line may be wider than a cable (kept within 0.5 … 3)", () => {
+test("line widths stay within their supported scale range", () => {
+  const [narrow] = lineFlows([{ kind: "line", floorId: "eg", points: [[0, 0, 0], [1, 0, 0]], colors: [red], flow: 0, width: 0.25 }]);
+  assert.equal(narrow.width, 0.25);
+  const [tiny] = lineFlows([{ kind: "line", floorId: "eg", points: [[0, 0, 0], [1, 0, 0]], colors: [red], flow: 0, width: 0.01 }]);
+  assert.equal(tiny.width, 0.05);
   const [wide] = lineFlows([{ kind: "line", floorId: "eg", points: [[0, 0, 0], [1, 0, 0]], colors: [red], flow: 0, width: 2 }]);
   assert.equal(wide.width, 2);
   const [huge] = lineFlows([{ kind: "line", floorId: "eg", points: [[0, 0, 0], [1, 0, 0]], colors: [red], flow: 0, width: 9 }]);

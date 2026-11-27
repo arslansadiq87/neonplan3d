@@ -76,7 +76,7 @@ export function lineFlows(lines: readonly Line[]): LineFlow[] {
         dist,
         power: Math.max(0, l.flow),
         color,
-        ...(l.width ? { width: Math.min(3, Math.max(0.5, l.width)) } : {}),
+        ...(l.width ? { width: Math.min(3, Math.max(0.05, l.width)) } : {}),
         ...(l.look === "pipe" ? { pipe: true } : {}),
         ...(l.views === "house" ? { house: true } : l.views === "floor" ? { floor: true } : {}),
       });

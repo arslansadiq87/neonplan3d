@@ -12,7 +12,7 @@ const normalizedColor = (value: unknown): Rgb | null => {
   if (typeof value === "string" && /^#?[0-9a-f]{6}$/i.test(value)) { const s = value.replace("#", ""); return [0, 2, 4].map(i => parseInt(s.slice(i, i + 2), 16)) as Rgb; }
   return null;
 };
-const UNLIT: Rgb = [12, 17, 24];
+const UNLIT: Rgb = [8, 8, 8];
 const stateAvailable = (state: HassEntity | undefined): state is HassEntity => !!state && !["", "unknown", "unavailable"].includes(state.state.toLowerCase());
 const stateValue = (entity: string | undefined, states: Record<string, HassEntity>): string | null => {
   const state = entity ? states[entity] : undefined;
@@ -147,11 +147,11 @@ export function drawSmartRgb(f: Furniture, base: number, states: Record<string, 
     for (const [index, edge] of edges.entries()) {
       const gap = cfg.connectorGap * scale / 2; const dx = edge.b[0] - edge.a[0]; const dy = edge.b[1] - edge.a[1]; const len = Math.hypot(dx, dy) || 1;
       const a: PlanePoint = [edge.a[0] + dx * gap / len, edge.a[1] + dy * gap / len]; const b: PlanePoint = [edge.b[0] - dx * gap / len, edge.b[1] - dy * gap / len];
-      out.push(...bar(edge.a, edge.b, width + gap, depth, 0, "#172432", project));
+      out.push(...bar(edge.a, edge.b, width + gap, depth, 0, "#24282e", project));
       out.push(...ledBar(a, b, Math.min(cfg.diffuserWidth * scale, width * 0.7), depth * 0.35, depth * 0.52, light.on ? light.rgb : UNLIT, pattern, index / edges.length, project));
     }
     const joints = new Map<string, PlanePoint>(); for (const e of edges) { joints.set(e.a.join(","), e.a); joints.set(e.b.join(","), e.b); }
-    for (const [x, y] of joints.values()) out.push(...prism(Array.from({ length: 8 }, (_, i) => [x + (width * 0.58 + cfg.connectorGap * scale / 2) * Math.cos(i * Math.PI / 4), y + (width * 0.58 + cfg.connectorGap * scale / 2) * Math.sin(i * Math.PI / 4)] as PlanePoint), 0, depth * 1.15, "#263c50", project));
+    for (const [x, y] of joints.values()) out.push(...prism(Array.from({ length: 8 }, (_, i) => [x + (width * 0.58 + cfg.connectorGap * scale / 2) * Math.cos(i * Math.PI / 4), y + (width * 0.58 + cfg.connectorGap * scale / 2) * Math.sin(i * Math.PI / 4)] as PlanePoint), 0, depth * 1.15, "#292d33", project));
     return out;
   }
   if (!config.wall) return out;
@@ -164,7 +164,7 @@ export function drawSmartRgb(f: Furniture, base: number, states: Record<string, 
     // Wall pack depth is centered on the mounting plane; the room-facing surface is +d/2.
     const back = f.d / 2; const railZ = back - layout.stripDepth / 2; const ledDepth = layout.stripDepth * 0.35;
     const ledZ = back + ledDepth / 2 + 0.0002;
-    out.push(...bar(a, b, layout.stripWidth, layout.stripDepth, railZ, "#344b61", project));
+    out.push(...bar(a, b, layout.stripWidth, layout.stripDepth, railZ, "#24282e", project));
     out.push(...ledBar(a, b, layout.stripWidth * 0.58, ledDepth, ledZ, state.on ? state.rgb : UNLIT, state.on ? state.pattern : "solid", edge.id.length % 7 / 7, project, state.on ? state.count : 1));
   }
   return out;
@@ -176,7 +176,7 @@ function makeLine(floorId: string, points: [number, number, number][], rgb: Rgb,
   const [a, b] = points;
   const path = Array.from({ length: 17 }, (_, i) => { const t = i / 16; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t] as [number, number, number]; });
   const flow = Math.max(100, Math.min(2500, Math.round(2600 - speed * 9.8)));
-  return { kind: "line", floorId, points: path, colors: path.map((_p, i) => unit(visualColor(rgb, pattern, i / 16, phase))), flow, width: 0.5 };
+  return { kind: "line", floorId, points: path, colors: path.map((_p, i) => unit(visualColor(rgb, pattern, i / 16, phase))), flow, width: 0.25 };
 }
 /** Moving light passes use NeonPlan's existing batched cable-flow layer; no Three.js light is created per LED. */
 export function smartRgbScene(building: Building, hass: HomeAssistant): ScenePiece[] {

@@ -275,7 +275,7 @@ export type ScenePiece =
       colors: [number, number, number][];
       /** How fast the light runs, like watts on a cable (0: it rests and glows faintly, 100 slow … 2500 fast). */
       flow: number;
-      /** Its width against an energy cable's (1 … 3; a pipe is wider). */
+      /** Width scale against an energy cable (0.05 … 3; a pipe is wider). */
       width?: number;
       /**
        * "flow" (default): a glowing cable with comets like the energy cables. "pipe": a solid pipe in its colour with
