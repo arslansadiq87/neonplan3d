@@ -303,7 +303,13 @@
     },
     {
       "path": "frontend/src/smart-rgb-config.ts",
-      "change": "Define versioned furniture.mods configuration, stable fixture IDs, default entity bindings and firmware zone mapping; retain saved sparse/empty LED edge maps without merging default assignments and align implicit wall mounting with the native pack default.",
+      "change": "Define versioned furniture.mods configuration, stable fixture IDs, explicitly assigned entity bindings and firmware zone mapping; new fixtures start unbound, saved explicit bindings and sparse/empty LED edge maps remain intact, and implicit wall mounting matches the native pack default.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/model.ts",
+      "change": "Classify Smart RGB pack fixtures as decorative self-illuminating devices, never conventional lamps, even if a legacy or malformed pack definition includes lamp metadata; ordinary lamp classification is unchanged.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -333,7 +339,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-runtime.ts",
-      "change": "Render only explicitly configured thin RGB wall strips through native viewer geometry buffers; align the lazily generated, narrow animated flow with physical LED centerlines and native wall mounting. Keep switched-off fixtures neutral charcoal. Unbound, missing, unavailable, off and zero-brightness states remain dark; only powered-on non-solid effects animate. The lazy bundle uses stable pack definition depths and does not rely on a duplicate main-bundle pack registry.",
+      "change": "Render only configured RGB strip geometry through native viewer buffers. No entity binding means neutral charcoal and no animation; bound entities must report on with valid colour and nonzero brightness. Multizone edges require their own zone-on report or explicit active zone entity. Active effect ribbons use the native narrow, non-additive pipe layer rather than additive energy-cable halos, and remain aligned with physical strips. Smart RGB does not emit room lighting. The isolated lazy bundle keeps stable furniture-local transforms and does not rely on a duplicate main-bundle pack registry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -363,7 +369,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-config.test.ts",
-      "change": "Cover default fixture configuration, firmware zone mappings, sanitization, persistence across plan cloning, and saved sparse/empty edge maps.",
+      "change": "Cover unbound defaults, retained explicit bindings, firmware zone mappings, sanitization, persistence across plan cloning, and saved sparse/empty edge maps.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -375,7 +381,7 @@
     },
     {
       "path": "frontend/src/smart-rgb-runtime.test.ts",
-      "change": "Cover powered/off/unavailable geometry, brightness/color, selected zones, LED-only wall rendering, exact animated LED centerline alignment across mount elevations/rotation/resizing, and rendering when the isolated lazy bundle has no shared pack registry.",
+      "change": "Cover strict unbound/off/unavailable/zero-brightness behavior, per-zone state and brightness, neutral geometry, pipe-only non-additive animation, exclusion from conventional room lighting, retained ordinary lamp behavior, exact strip alignment across transforms, and rendering when the lazy bundle has no shared pack registry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },
@@ -387,7 +393,19 @@
     },
     {
       "path": "custom_components/neonplan3d/frontend/neonplan3d-smart-rgb.js",
-      "change": "Generated isolated Smart RGB manager and viewer bundle (52.7 KB); package at integration frontend root and load on demand. Viewer geometry resolves without cross-bundle pack registry state.",
+      "change": "Generated isolated Smart RGB manager and viewer bundle (52.3 KB); package at integration frontend root and load on demand. Viewer geometry resolves without cross-bundle pack registry state. Explicit entity/state gating renders inactive fixtures charcoal; animated strips use the narrow non-additive pipe layer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+      "change": "Regenerated native viewer bundle for narrow Smart RGB pipe widths; keeps decorative RGB strips out of the additive energy-cable layer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
+      "change": "Regenerated for decorative Smart RGB fixtures to remain excluded from conventional room-light classification while normal lamps are unchanged.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }

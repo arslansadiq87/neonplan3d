@@ -1653,6 +1653,8 @@ export function stairsULayout(w: number, d: number, h: number) {
 }
 
 export function isLamp(type: string): boolean {
+  // These are decorative RGB fixtures: their entity binding drives only their own strip surfaces.
+  if (type.startsWith("pack:studio.techpanda.smart_rgb_lighting:")) return false;
   return LAMP_TYPES.has(type) || !!packItem(type)?.light;
 }
 

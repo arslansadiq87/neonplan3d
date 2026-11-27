@@ -123,6 +123,24 @@ for(const height of [0,.9144,1.5,2.5])await capture(`same-elevation-${String(hei
 for(const rotation of [0,90,180,270])await capture(`wall-rotation-${rotation}`,null,false,0,1.5,rotation,1.25);
 await capture('property-apart-active',null,true,0,1.5,0,1.0,true);
 await capture('property-stacked-active',null,true,0,1.5,0,1.0,false);
+const stripLayer=await page.evaluate(()=>{const v=window.fp3dPanel.renderRoot.querySelector('fp3d-view3d'),f=v.viewer.floorMap.get('eg');return {pipeVisible:f.pipeLineMesh.visible,pipeBlending:f.pipeLineMesh.material.blending,cableVisible:f.flowMesh.visible,cableBlending:f.flowMesh.material.blending,flows:v.viewer.flows.length,allDecorativeFlowsUsePipe:v.viewer.flows.length>0&&v.viewer.flows.every(x=>x.pipe)}});
+if(!stripLayer.pipeVisible||stripLayer.pipeBlending!==1||stripLayer.cableVisible||stripLayer.allDecorativeFlowsUsePipe!==true)throw new Error(`Smart RGB animation escaped its non-additive pipe layer: ${JSON.stringify(stripLayer)}`);
+console.log('RGB_RENDER_LAYER',JSON.stringify(stripLayer));
+// State lifecycle acceptance against the actual production panel/viewer, using only synthetic HA states.
+const stateScreenshot = async (name, changes) => { await page.evaluate(updates => { const p=window.fp3dPanel,s={...p.hass.states};for(const [id,update] of Object.entries(updates))s[id]={...s[id],...update,attributes:{...s[id]?.attributes,...update.attributes}};p.hass={...p.hass,states:s}; }, changes); await capture(name,null); };
+await stateScreenshot('hex-unavailable',{'light.hex_led':{state:'unavailable'}});
+await stateScreenshot('hex-zero-brightness',{'light.hex_led':{state:'on',attributes:{brightness:0,effect:'rainbow',rgb_color:[255,0,0]}}});
+await page.evaluate(()=>{const p=window.fp3dPanel;const s={...p.hass.states,'light.hex_led':{...p.hass.states['light.hex_led'],state:'on',attributes:{...p.hass.states['light.hex_led'].attributes,brightness:230,rgb_color:[40,205,240],effect:'rainbow'}}};p.hass={...p.hass,states:s};window.__tpSmartRgbStates=s;window.__transitionChecks={hexOn:window.__tpSmartRgbScene(window.__qaOriginalBuilding,p.hass).length};const off={...s,'light.hex_led':{...s['light.hex_led'],state:'off',attributes:{...s['light.hex_led'].attributes,brightness:0}}};p.hass={...p.hass,states:off};window.__tpSmartRgbStates=off;window.__transitionChecks.hexOff=window.__tpSmartRgbScene(window.__qaOriginalBuilding,p.hass).length;});
+await capture('hex-active-to-off-no-reload',null);
+await stateScreenshot('wall-unavailable',{'light.rgb_zone_wall':{state:'unavailable'}});
+await capture('wall-zone-zero-brightness',()=>{const p=window.fp3dPanel,s={...p.hass.states},sensor=s['sensor.rgb_controller_status'];s['light.rgb_lights']={...s['light.rgb_lights'],state:'on',attributes:{...s['light.rgb_lights'].attributes,brightness:255,rgb_color:[0,235,255],effect:'RAINBOW'}};s['light.rgb_zone_wall']={...s['light.rgb_zone_wall'],state:'on',attributes:{...s['light.rgb_zone_wall'].attributes,brightness:0,rgb_color:[0,235,255],effect:'RAINBOW'}};s['sensor.rgb_controller_status']={...sensor,state:'online',attributes:{...sensor.attributes,zones:sensor.attributes.zones.map(z=>({...z,on:true,brightness_ha:255,pattern_name:'RAINBOW'}))}};p.hass={...p.hass,states:s};});
+const savedBuilding=await page.evaluate(()=>structuredClone(window.__qaOriginalBuilding));
+await page.evaluate(()=>{const b=structuredClone(window.__qaOriginalBuilding);for(const f of b.floors)for(const item of f.furniture){const c=item.mods?.['studio.techpanda.smart_rgb_lighting'];if(!c)continue;c.bindings={light:'',status:'',pattern:'',speed:'',color:''};for(const z of c.wall?.zones??[])z.entity=z.speedEntity=z.countEntity='';}window.__qaOriginalBuilding=b;});
+await capture('wall-new-unbound',null);
+await page.evaluate(b=>{window.__qaOriginalBuilding=b},savedBuilding);
+const transitionChecks=await page.evaluate(()=>window.__transitionChecks);
+if(!transitionChecks||transitionChecks.hexOn<=transitionChecks.hexOff||transitionChecks.hexOn-transitionChecks.hexOff!==30)throw new Error(`Active-to-off transition did not clear only the hex animations synchronously: ${JSON.stringify(transitionChecks)}`);
+console.log('STATE_TRANSITION_CHECKS',JSON.stringify(transitionChecks));
 console.log('INTERACTIONS',JSON.stringify({serviceCalls:allCalls,persist}));console.log('LIGHTING_VISUAL_CHECKS',JSON.stringify(await page.evaluate(()=>window.__lightingChecks??[])));
 console.log('SCREENSHOTS',out);
 console.log('LAZY_REQUESTS',JSON.stringify(lazyRequests));console.log('ERRORS',JSON.stringify(errors));console.log('FAILED',JSON.stringify(failed));

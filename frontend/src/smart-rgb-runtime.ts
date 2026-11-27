@@ -12,8 +12,9 @@ const normalizedColor = (value: unknown): Rgb | null => {
   if (typeof value === "string" && /^#?[0-9a-f]{6}$/i.test(value)) { const s = value.replace("#", ""); return [0, 2, 4].map(i => parseInt(s.slice(i, i + 2), 16)) as Rgb; }
   return null;
 };
-const UNLIT: Rgb = [8, 8, 8];
-const stateAvailable = (state: HassEntity | undefined): state is HassEntity => !!state && !["", "unknown", "unavailable"].includes(state.state.toLowerCase());
+const UNLIT: Rgb = [52, 64, 77];
+const stateAvailable = (state: HassEntity | undefined): state is HassEntity => !!state && !["", "unknown", "unavailable"].includes(state.state.trim().toLowerCase());
+const controllerOnline = (state: HassEntity | undefined): state is HassEntity => stateAvailable(state) && !["offline", "disconnected", "down"].includes(state.state.trim().toLowerCase());
 const stateValue = (entity: string | undefined, states: Record<string, HassEntity>): string | null => {
   const state = entity ? states[entity] : undefined;
   return stateAvailable(state) ? state.state.trim() : null;
@@ -30,7 +31,7 @@ function scaledColor(color: Rgb | null, brightness: unknown): Rgb {
 }
 function reportedStatus(config: ReturnType<typeof readSmartRgbConfig> & {}, states: Record<string, HassEntity>) {
   const state = config.bindings.status ? states[config.bindings.status] : undefined;
-  return stateAvailable(state) ? state.attributes : {};
+  return controllerOnline(state) ? state.attributes : {};
 }
 function selectedEffect(config: ReturnType<typeof readSmartRgbConfig> & {}, states: Record<string, HassEntity>, ...fallbacks: unknown[]): string {
   const bound = stateValue(config.bindings.pattern, states);
@@ -39,38 +40,49 @@ function selectedEffect(config: ReturnType<typeof readSmartRgbConfig> & {}, stat
   return "solid";
 }
 function hexState(config: ReturnType<typeof readSmartRgbConfig> & {}, states: Record<string, HassEntity>): { on: boolean; rgb: Rgb; pattern: string; speed: number } {
-  const light = config.bindings.light ? states[config.bindings.light] : undefined;
+  const entity = config.bindings.light?.trim();
+  const light = entity ? states[entity] : undefined;
   const status = reportedStatus(config, states);
-  if (!stateAvailable(light) || light.state !== "on") return { on: false, rgb: UNLIT, pattern: "solid", speed: 100 };
+  if (!entity || !stateAvailable(light) || light.state.trim().toLowerCase() !== "on") return { on: false, rgb: UNLIT, pattern: "solid", speed: 100 };
   const colorInput = stateValue(config.bindings.color, states);
   const color = normalizedColor(light.attributes.rgb_color) ?? normalizedColor(light.attributes.color) ?? normalizedColor(status.color) ?? normalizedColor(colorInput);
   const brightness = light.attributes.brightness ?? status.brightness_ha ?? status.brightness ?? 255;
   const rgb = scaledColor(color, brightness);
   const pattern = selectedEffect(config, states, light.attributes.effect);
   const speed = Number(stateValue(config.bindings.speed, states) ?? status.speed_ms ?? 100);
-  return { on: !!color && Number(brightness) > 0, rgb, pattern, speed: Number.isFinite(speed) ? speed : 100 };
+  return { on: !!color && Number(brightness) > 0 && Math.max(...rgb) > 0, rgb, pattern, speed: Number.isFinite(speed) ? speed : 100 };
 }
 interface ZoneState { on: boolean; rgb: Rgb; pattern: string; speed: number; count: number }
 function wallZoneState(config: ReturnType<typeof readSmartRgbConfig> & {}, id: number, states: Record<string, HassEntity>): ZoneState {
   const cfg = config.wall!;
   const zone = cfg.zones.find(item => item.id === id);
-  const global = config.bindings.light ? states[config.bindings.light] : undefined;
-  if (stateAvailable(global) && global.state === "off") return { on: false, rgb: UNLIT, pattern: "solid", speed: 100, count: zone?.ledCount ?? 8 };
+  const globalId = config.bindings.light?.trim();
+  const statusId = config.bindings.status?.trim();
+  const global = globalId ? states[globalId] : undefined;
   const status = reportedStatus(config, states);
   const zones = Array.isArray(status.zones) ? status.zones as Record<string, unknown>[] : [];
   const reported = zones.find(value => Number(value.id) === id);
   if (reported && reported.on !== true) return { on: false, rgb: UNLIT, pattern: "solid", speed: 100, count: Number(reported.leds ?? zone?.ledCount ?? 8) };
-  const zoneEntity = zone?.entity ? states[zone.entity] : undefined;
-  if (zoneEntity && !stateAvailable(zoneEntity)) return { on: false, rgb: UNLIT, pattern: "solid", speed: 100, count: zone?.ledCount ?? 8 };
-  if (stateAvailable(zoneEntity) && zoneEntity.state !== "on") return { on: false, rgb: UNLIT, pattern: "solid", speed: 100, count: zone?.ledCount ?? 8 };
-  const sourceOn = stateAvailable(zoneEntity) ? true : reported?.on === true || (stateAvailable(global) && global.state === "on");
+  const zoneEntityId = zone?.entity?.trim();
+  const zoneEntity = zoneEntityId ? states[zoneEntityId] : undefined;
+  const zoneState = stateAvailable(zoneEntity) ? zoneEntity.state.trim().toLowerCase() : "";
+  const globalState = stateAvailable(global) ? global.state.trim().toLowerCase() : "";
+  const hasReportedZones = Array.isArray(status.zones);
+  // An assigned zone entity is authoritative. Otherwise an assigned global light must be ON; when
+  // controller zone telemetry is present, that particular mapped zone must also report on.
+  const sourceOn = zoneEntityId
+    ? zoneState === "on"
+    : globalId
+      ? globalState === "on" && (!hasReportedZones || reported?.on === true)
+      : !!statusId && controllerOnline(states[statusId]) && reported?.on === true;
   if (!sourceOn) return { on: false, rgb: UNLIT, pattern: "solid", speed: 100, count: Number(reported?.leds ?? zone?.ledCount ?? 8) };
-  const fallbackColor = normalizedColor(reported?.color) ?? (stateAvailable(global) && global.state === "on" ? normalizedColor(global.attributes.rgb_color) ?? normalizedColor(global.attributes.color) : null);
+  const fallbackColor = normalizedColor(reported?.color) ?? (globalState === "on" ? normalizedColor(global?.attributes.rgb_color) ?? normalizedColor(global?.attributes.color) : null);
   const color = stateAvailable(zoneEntity) ? normalizedColor(zoneEntity.attributes.rgb_color) ?? normalizedColor(zoneEntity.attributes.color) ?? fallbackColor : fallbackColor;
-  const brightness = (stateAvailable(zoneEntity) ? zoneEntity.attributes.brightness : undefined) ?? reported?.brightness_ha ?? (reported?.brightness_pct != null ? Number(reported.brightness_pct) * 2.55 : undefined) ?? (stateAvailable(global) ? global.attributes.brightness : undefined) ?? 255;
-  const pattern = selectedEffect(config, states, stateAvailable(zoneEntity) ? zoneEntity.attributes.effect : undefined, reported?.pattern_name, stateAvailable(global) ? global.attributes.effect : undefined);
+  const brightness = (stateAvailable(zoneEntity) ? zoneEntity.attributes.brightness : undefined) ?? reported?.brightness_ha ?? (reported?.brightness_pct != null ? Number(reported.brightness_pct) * 2.55 : undefined) ?? (globalState === "on" ? global?.attributes.brightness : undefined) ?? 255;
+  const pattern = selectedEffect(config, states, stateAvailable(zoneEntity) ? zoneEntity.attributes.effect : undefined, reported?.pattern_name, globalState === "on" ? global?.attributes.effect : undefined);
   const speed = Number(stateValue(zone?.speedEntity, states) ?? reported?.frame_ms ?? 100);
-  return { on: !!color && Number(brightness) > 0, rgb: scaledColor(color, brightness), pattern, speed: Number.isFinite(speed) ? speed : 100, count: Number(reported?.leds ?? stateValue(zone?.countEntity, states) ?? zone?.ledCount ?? 8) };
+  const rgb = scaledColor(color, brightness);
+  return { on: !!color && Number(brightness) > 0 && Math.max(...rgb) > 0, rgb, pattern, speed: Number.isFinite(speed) ? speed : 100, count: Number(reported?.leds ?? stateValue(zone?.countEntity, states) ?? zone?.ledCount ?? 8) };
 }
 function ledSegments(a: PlanePoint, b: PlanePoint, count: number): [PlanePoint, PlanePoint][] {
   const n = Math.max(1, Math.min(32, Math.floor(count)));
@@ -176,9 +188,9 @@ function makeLine(floorId: string, points: [number, number, number][], rgb: Rgb,
   const [a, b] = points;
   const path = Array.from({ length: 17 }, (_, i) => { const t = i / 16; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t] as [number, number, number]; });
   const flow = Math.max(100, Math.min(2500, Math.round(2600 - speed * 9.8)));
-  return { kind: "line", floorId, points: path, colors: path.map((_p, i) => unit(visualColor(rgb, pattern, i / 16, phase))), flow, width: 0.25 };
+  return { kind: "line", floorId, points: path, colors: path.map((_p, i) => unit(visualColor(rgb, pattern, i / 16, phase))), flow, width: 0.25, look: "pipe" };
 }
-/** Moving light passes use NeonPlan's existing batched cable-flow layer; no Three.js light is created per LED. */
+/** Moving light passes use the narrow, non-additive pipe layer so no cable halo or room illumination is emitted. */
 export function smartRgbScene(building: Building, hass: HomeAssistant): ScenePiece[] {
   const result: ScenePiece[] = [];
   for (const floor of building.floors) for (const f of floor.furniture) {

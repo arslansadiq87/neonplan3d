@@ -41,6 +41,15 @@ const pattern = params.get("pattern") ?? "rainbow";
 const powered = params.get("power") !== "off";
 if (rgbKind) {
   const config = defaultSmartRgbConfig(rgbKind);
+  if (powered) {
+    config.bindings.light = rgbKind === "hex" ? "light.hex_led" : "light.rgb_lights";
+    config.bindings.status = rgbKind === "hex" ? "sensor.hex_led_status_raw" : "sensor.rgb_controller_status";
+    config.bindings.pattern = rgbKind === "hex" ? "input_select.hex_led_pattern" : "select.rgb_pattern";
+    if (rgbKind === "hex") {
+      config.bindings.speed = "input_number.hex_led_speed";
+      config.bindings.color = "input_text.hex_led_color";
+    }
+  }
   if (rgbKind === "hex" && params.get("layout") === "expanded") config.hex!.cells = [{ q: 0, r: 0 }, { q: 1, r: 0 }, { q: 2, r: 0 }, { q: 0, r: 1 }, { q: 1, r: 1 }];
   if (rgbKind === "triangles") {
     config.wall!.raisedPanels = ["u:0:0", "d:1:1", "u:2:2"];

@@ -49,11 +49,11 @@ export interface SmartRgbConfig {
 }
 
 const FIRMWARE_ZONES = [
-  { id: 0, name: "Wall", entity: "light.rgb_zone_wall", speedEntity: "number.rgb_zone_wall_speed", countEntity: "number.rgb_zone_wall_count" },
-  { id: 1, name: "Monitors", entity: "light.rgb_zone_monitors", speedEntity: "number.rgb_zone_monitors_speed", countEntity: "number.rgb_zone_monitors_count" },
-  { id: 2, name: "PC Case", entity: "light.rgb_zone_pc_case", speedEntity: "number.rgb_zone_pc_case_speed", countEntity: "number.rgb_zone_pc_case_count" },
-  { id: 3, name: "Ceiling", entity: "light.rgb_zone_ceiling", speedEntity: "number.rgb_zone_ceiling_speed", countEntity: "number.rgb_zone_ceiling_count" },
-  { id: 4, name: "Moon Globe", entity: "light.rgb_zone_moon_globe", speedEntity: "number.rgb_zone_moon_globe_speed", countEntity: "number.rgb_zone_moon_globe_count" },
+  { id: 0, name: "Wall", entity: "", speedEntity: "", countEntity: "" },
+  { id: 1, name: "Monitors", entity: "", speedEntity: "", countEntity: "" },
+  { id: 2, name: "PC Case", entity: "", speedEntity: "", countEntity: "" },
+  { id: 3, name: "Ceiling", entity: "", speedEntity: "", countEntity: "" },
+  { id: 4, name: "Moon Globe", entity: "", speedEntity: "", countEntity: "" },
 ];
 
 const DEFAULT_HEX_CELLS: HexCell[] = [{ q: 0, r: 0 }, { q: 1, r: 0 }, { q: 0, r: 1 }];
@@ -79,13 +79,7 @@ export function defaultSmartRgbConfig(kind: "hex" | "triangles"): SmartRgbConfig
     version: 1,
     kind,
     glowIntensity: 0.75,
-    bindings: {
-      light: "light.hex_led",
-      status: "sensor.hex_led_status_raw",
-      pattern: "input_select.hex_led_pattern",
-      speed: "input_number.hex_led_speed",
-      color: "input_text.hex_led_color",
-    },
+    bindings: { light: "", status: "", pattern: "", speed: "", color: "" },
     hex: { cells: DEFAULT_HEX_CELLS.map(cell => ({ ...cell })), sideLength: 0.42, housingWidth: 0.055, housingDepth: 0.035, diffuserWidth: 0.018, connectorGap: 0.012 },
   };
   const wall = defaultWallZones();
@@ -93,7 +87,7 @@ export function defaultSmartRgbConfig(kind: "hex" | "triangles"): SmartRgbConfig
     version: 1,
     kind,
     glowIntensity: 0.75,
-    bindings: { light: "light.rgb_lights", pattern: "select.rgb_pattern", status: "sensor.rgb_controller_status" },
+    bindings: { light: "", pattern: "", status: "" },
     wall: { rows: 4, columns: 4, panelSide: 0.55, panelThickness: 0.035, panelGap: 0.008, raisedDepth: 0.024, grooveSpacing: 0.035, grooveDirection: 0, grooveDepth: 0.002, raisedPanels: ["u:1:1", "d:2:2", "u:3:1", "d:0:2"], ...wall },
   };
 }

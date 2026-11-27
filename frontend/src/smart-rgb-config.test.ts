@@ -5,23 +5,36 @@ import type { Furniture } from "./model.ts";
 
 const furniture = (type: string): Furniture => ({ id: "light-1", type, x: 1, z: 2, rotation: 0, w: 2, d: 0.12, h: 2, variant: null });
 
-test("hex light defaults use the provided entity IDs and a deduplicated three-cell frame layout", () => {
+test("new hex fixtures start unbound and retain their three-cell frame layout", () => {
   const item = furniture("pack:studio.techpanda.smart_rgb_lighting:hexagonal_rgb_frame_lights");
   const config = readSmartRgbConfig(item)!;
-  assert.equal(config.bindings.light, "light.hex_led");
-  assert.equal(config.bindings.pattern, "input_select.hex_led_pattern");
+  assert.equal(config.bindings.light, "");
+  assert.equal(config.bindings.pattern, "");
+  assert.equal(config.bindings.status, "");
   assert.equal(config.hex?.cells.length, 3);
   assert.equal(config.hex?.sideLength, 0.42);
 });
 
-test("wall light uses actual five firmware zone IDs without a one-panel-per-zone assumption", () => {
+test("new wall fixtures start unbound and retain five firmware zones without a one-panel-per-zone assumption", () => {
   const item = furniture("pack:studio.techpanda.smart_rgb_lighting:multizone_geometric_rgb_wall_lights");
   const config = readSmartRgbConfig(item)!;
-  assert.equal(config.bindings.status, "sensor.rgb_controller_status");
+  assert.equal(config.bindings.light, "");
+  assert.equal(config.bindings.status, "");
   assert.equal(config.wall?.zones.length, 5);
   assert.equal(config.wall?.zones[0].name, "Wall");
   assert.ok(Object.values(config.wall?.edgeZones ?? {}).every(zone => zone === 0));
   assert.ok(Object.keys(config.wall?.edgeZones ?? {}).length > 1);
+  assert.ok(config.wall?.zones.every(zone => !zone.entity && !zone.speedEntity && !zone.countEntity));
+});
+
+test("stored explicit entity bindings survive config defaults and sanitizing", () => {
+  const item = furniture("pack:studio.techpanda.smart_rgb_lighting:hexagonal_rgb_frame_lights");
+  const config = defaultSmartRgbConfig("hex");
+  config.bindings.light = "light.hex_led";
+  config.bindings.status = "sensor.hex_led_status_raw";
+  writeSmartRgbConfig(item, config);
+  assert.equal(readSmartRgbConfig(item)?.bindings.light, "light.hex_led");
+  assert.equal(readSmartRgbConfig(item)?.bindings.status, "sensor.hex_led_status_raw");
 });
 
 test("a saved sparse or empty edge map is complete and does not regain default LED assignments", () => {
