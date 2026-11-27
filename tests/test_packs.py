@@ -173,7 +173,9 @@ async def test_import_list_and_remove(hass: HomeAssistant, hass_ws_client, monke
     assert (await client.receive_json())["result"]["packs"] == []
 
 
-async def test_water_pack_release_update_preserves_placed_tank(hass: HomeAssistant, hass_ws_client, monkeypatch) -> None:
+async def test_water_pack_release_update_preserves_placed_tank(
+    hass: HomeAssistant, hass_ws_client, monkeypatch
+) -> None:
     """Updating a furniture-only pack replaces its catalog entry without rewriting saved plans."""
     private, keys = _key()
     monkeypatch.setattr(packs, "PACK_PUBLIC_KEYS", keys)
@@ -187,7 +189,13 @@ async def test_water_pack_release_update_preserves_placed_tank(hass: HomeAssista
     tank = copy.deepcopy(PAYLOAD["items"][0])
     tank["id"] = "rectangular_water_tank"
     tank["slots"] = [{"id": "level", "name": {"en": "Water level"}, "domains": ["sensor"]}]
-    payload_v2 = {**copy.deepcopy(PAYLOAD), "id": "studio.techpanda.water_tanks", "name": "TechPanda Water Tanks", "release": 2, "items": [tank]}
+    payload_v2 = {
+        **copy.deepcopy(PAYLOAD),
+        "id": "studio.techpanda.water_tanks",
+        "name": "TechPanda Water Tanks",
+        "release": 2,
+        "items": [tank],
+    }
     await client.send_json_auto_id({"type": "neonplan3d/packs/import", "pack": _sign(private, keys, payload_v2)})
     assert (await client.receive_json())["success"]
 
@@ -222,7 +230,11 @@ async def test_water_pack_release_update_preserves_placed_tank(hass: HomeAssista
     assert len(catalog) == 1
     assert catalog[0]["id"] == "studio.techpanda.water_tanks"
     assert catalog[0]["release"] == 3
-    assert {item["id"] for item in catalog[0]["items"]} == {"rectangular_water_tank", "cylindrical_water_tank", "ro_plant"}
+    assert {item["id"] for item in catalog[0]["items"]} == {
+        "rectangular_water_tank",
+        "cylindrical_water_tank",
+        "ro_plant",
+    }
 
     await client.send_json_auto_id({"type": "neonplan3d/building/get"})
     saved = (await client.receive_json())["result"]["building"]["floors"][0]["furniture"][0]
