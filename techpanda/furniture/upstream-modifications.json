@@ -4,6 +4,138 @@
   "baseline_commit": "503bcb368ba06cd8e31e2df6da1a1000158cf275",
   "custom_upstream_file_changes": [
     {
+      "path": "frontend/src/components/editor.ts",
+      "change": "Add native selected-furniture infrastructure configuration forms stored through the editor's undoable Building.mods extension data; context-sensitive recorder, camera, router/AP and switch settings with existing HA entity pickers and channel duplicate protection.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/build.mjs",
+      "change": "Build and fingerprint a separately lazy-loaded infrastructure manager entry bundle with an independent size budget; include it in watch and production builds.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/infrastructure-manager.ts",
+      "change": "Add the downstream, separately bundled infrastructure manager UI for inventory, camera configuration, recorder capacity/channel assignments, network interfaces, switch port assignments, IP inventory/CSV, logical topology, connections and validation; persist through Building.mods and editor events.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/load-infrastructure.ts",
+      "change": "Load the infrastructure manager by a cache-busted dynamic import only when requested.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add an Infrastructure Manager Extensions entry and lazy-loaded manager route with equipment locate return path.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/editor.ts",
+      "change": "Add a compact selected-infrastructure action to open the lazy manager and accept manager edits through the editor undo history.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-infrastructure.js",
+      "change": "Generated lazy manager bundle, separate from the editor and main bundles.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "frontend/src/modules.ts",
+      "change": "Extend the approved executable module field contract with a plain text input field for hostnames, addresses and metadata; the furniture-only signing restriction is unchanged.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/model.ts",
+      "change": "Add optional Building.mods data, reusing the existing module namespace for backward-compatible plan persistence and standard export/import.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/editor.ts",
+      "change": "Add the native context-sensitive infrastructure furniture form and undoable metadata mutations; delete/duplicate operations maintain connected infrastructure references.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/editor.ts",
+      "change": "Add camera horizontal/vertical FOV, full-circle azimuth, coverage color/opacity and optional ground projection controls; keep selected camera elevation synchronized with its furniture geometry and carry azimuth through furniture rotation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Merge infrastructure camera furniture metadata with bound native camera markers and carry the furniture lens pose/FOV into the native stream marker without creating duplicate camera markers.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Render a per-floor translucent 3D CCTV frustum and optional native ground projection from the camera lens pose; persistent Show-menu visibility is separate from spotlight cone visibility and follows floor Apart/Stacked transforms.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add persistent Camera field of view control to the Show menu, disabled by default.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/infrastructure.ts",
+      "change": "Extend optional camera metadata with color, opacity and ground projection settings and calculate camera furniture lens poses from depth, height, azimuth and floor elevation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/modules.ts",
+      "change": "Add a plain-text field to the approved module editor API for separately approved executable extensions.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/model.ts",
+      "change": "Add optional Building.mods extension metadata for compatible save/export/import.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+      "change": "Regenerated editor bundle for optional infrastructure configuration forms; passed existing size budget.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/infrastructure.ts",
+      "change": "Add isolated optional infrastructure inventory types and pure validation/summary helpers for IP, MAC, network-scoped duplicate warnings and estimated camera coverage; stored in the approved module namespace.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/infrastructure.test.ts",
+      "change": "Regression coverage for address validation, network-scoped duplicate detection, missing connection references and bounded estimated camera coverage.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "techpanda/furniture/packs/cctv-network.source.json",
+      "change": "Furniture-only source for CCTV/network equipment. Sign with the existing restricted TechPanda key; this authorizes no executable module code.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/packs/cctv-network.source.json"
+    },
+    {
+      "path": "techpanda/furniture/cctv-network.module.js",
+      "change": "Optional downstream inventory UI source using the separately approved NeonPlan module workflow; it is not embedded in or authorized by the furniture-only pack.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/cctv-network.module.js"
+    },
+    {
       "path": ".gitignore",
       "change": "Ignore local integration backups and generated furniture pack/preview output so secrets and local artifacts are not staged accidentally. No upstream runtime behavior changes.",
       "official_keys_preserved": [],
@@ -118,6 +250,36 @@
     {
       "path": "frontend/src/site.test.ts",
       "change": "Cover secondary roof-field composition and live bindings, plus site-transformed ground-array position, rotation, elevation and native floor-geometry generation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Render the shared-Three infrastructure route overlay from data supplied by the lazy manager, expose equipment/label visibility controls, and split CCTV/network furniture geometry into independently visible and pickable batches.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/build.ts",
+      "change": "Batch CCTV furniture and network equipment into separate buffers so their visibility can be controlled independently while preserving item pick ranges.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/infrastructure.ts",
+      "change": "Estimate cable path lengths from actual floor elevations, produce route segments, recognize equipment item ids stored in signed furniture pack types, and validate switch port/PoE and recorder channel allocations.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Forward independent Wi-Fi and network-connection visibility preferences to the native viewer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add persistent, default-off Show controls for estimated Wi-Fi and network connection geometry.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }

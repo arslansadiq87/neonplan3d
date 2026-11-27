@@ -6,7 +6,7 @@
 // animated independently.
 
 import type { HassEntity } from "../types.ts";
-import { AdditiveBlending, CustomBlending, DstColorFactor, OneMinusDstColorFactor, NormalBlending, OneFactor, OneMinusSrcAlphaFactor, RingGeometry, Fog, CircleGeometry, Box3, CanvasTexture, ClampToEdgeWrapping, Color, BackSide, DoubleSide, FrontSide, Group, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MultiplyBlending, OrthographicCamera, PerspectiveCamera, Points, PointsMaterial, PlaneGeometry, Raycaster, RepeatWrapping, Scene, SRGBColorSpace, TextureLoader, type Texture, Float32BufferAttribute, Uint32BufferAttribute, DynamicDrawUsage, BufferGeometry as Geometry, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget, type Material, BufferGeometry } from "three";
+import { AdditiveBlending, CustomBlending, DstColorFactor, OneMinusDstColorFactor, NormalBlending, OneFactor, OneMinusSrcAlphaFactor, RingGeometry, Fog, CircleGeometry, Box3, CanvasTexture, ClampToEdgeWrapping, Color, BackSide, DoubleSide, FrontSide, Group, LineBasicMaterial, LineDashedMaterial, LineSegments, Mesh, MeshBasicMaterial, MultiplyBlending, OrthographicCamera, PerspectiveCamera, Points, PointsMaterial, PlaneGeometry, Raycaster, RepeatWrapping, Scene, SRGBColorSpace, TextureLoader, type Texture, Float32BufferAttribute, Uint32BufferAttribute, DynamicDrawUsage, BufferGeometry as Geometry, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget, type Material, BufferGeometry } from "three";
 import type { Building, Floor, Furniture, Room, StartView, Vec2 } from "../model.ts";
 import { markLit, recolorLamps, SHADE_SENTINEL, shadeFactors } from "./lamp-colors.ts";
 import { centroid, GANG_TYPES, labelPoint, gateSpans, outdoorSurface, outdoorTopAt, outdoorZones, pointInPolygon, openingStyle, setTerrain, WALL_LAMP_Y, zonesOf } from "../model.ts";
@@ -184,6 +184,13 @@ export interface DeviceMarker {
   reach?: number;
   /** Camera: degrees below the horizon it looks (for the look through it). */
   tilt?: number;
+  /** Camera vertical angle, used to draw an estimated spatial frustum. */
+  vFov?: number;
+  coverageColor?: string;
+  coverageOpacity?: number;
+  cameraEntity?: string;
+  cameraCoverage?: boolean;
+  projectGround?: boolean;
 }
 
 export type FloorStack = "dim" | "stacked" | "single";
@@ -474,6 +481,7 @@ interface FloorView {
   /** Soft glow around lit lamps, and light cones under spots (quality "High"). */
   haloMesh: Points;
   coneMesh: Mesh;
+  cameraFrustumMesh: Mesh;
   /** Motion trail on the floor (discs and ribbons). */
   trailMesh: Mesh;
   /** Doors of smart fridges (they swing open with their sensors), awnings and fence gates. */
@@ -497,6 +505,8 @@ interface FloorView {
   glassTris: { id: string; start: number; end: number }[];
   blindTris: { id: string; start: number; end: number }[];
   wallMesh: Mesh;
+  cctvMesh: Mesh;
+  networkMesh: Mesh;
   screenMesh: Mesh;
   screenSig: string;
   /** Klang & Kino: rings around playing speakers and lines between grouped ones (made when first needed). */
@@ -564,6 +574,9 @@ export class FloorplanViewer {
   private controls: OrbitControls;
   private readonly labels: HTMLDivElement;
   private readonly root = new Group();
+  private infrastructureOverlay:Group|null=null;
+  private infrastructureRouteTracks:{geometry:Geometry;a:string;b:string;ya:number;yb:number}[]=[];
+  renderInfrastructureRoutes(segments:{kind:string;a:{x:number;z:number;y?:number;floorId:string};b:{x:number;z:number;y?:number;floorId:string}}[],wifi:{x:number;z:number;y:number;radius:number;color?:string;opacity?:number}[]):void{if(!this.infrastructureOverlay){this.infrastructureOverlay=new Group();this.root.add(this.infrastructureOverlay);}this.infrastructureOverlay.traverse(o=>{const x=o as Mesh;x.geometry?.dispose();const m=x.material;if(m&&"dispose" in m)m.dispose();});this.infrastructureOverlay.clear();this.infrastructureRouteTracks=[];const colors:Record<string,number>={ethernet:0x28cfe2,poe:0x3bdd83,coax:0xf5ae38,fiber:0xb16cff,wireless:0x448cff,power:0xd16c77};for(const s of segments){const fa=this.floorMap.get(s.a.floorId),fb=this.floorMap.get(s.b.floorId);if(!fa||!fb)continue;const geo=new Geometry();geo.setAttribute("position",new Float32BufferAttribute([s.a.x,fa.floor.elevation+(s.a.y??.1),s.a.z,s.b.x,fb.floor.elevation+(s.b.y??.1),s.b.z],3));const mat=s.kind==="wireless"?new LineDashedMaterial({color:colors[s.kind],dashSize:.22,gapSize:.12}):new LineBasicMaterial({color:colors[s.kind]??0x28cfe2});const line=new LineSegments(geo,mat);if(s.kind==="wireless")line.computeLineDistances();this.infrastructureOverlay.add(line);this.infrastructureRouteTracks.push({geometry:geo,a:s.a.floorId,b:s.b.floorId,ya:s.a.y??.1,yb:s.b.y??.1});}for(const w of wifi){const mesh=new Mesh(new CircleGeometry(w.radius,48),new MeshBasicMaterial({color:w.color??"#2878ff",transparent:true,opacity:Math.max(0,Math.min(1,w.opacity??.12)),depthWrite:false,side:DoubleSide}));mesh.rotation.x=-Math.PI/2;mesh.position.set(w.x,w.y,w.z);mesh.userData.estimated=true;this.infrastructureOverlay.add(mesh);}this.invalidate();}
   private readonly patternTexture: CanvasTexture;
   private readonly blindTexture: CanvasTexture;
   private openingTargets = new Map<string, OpeningState>();
@@ -689,6 +702,10 @@ export class FloorplanViewer {
   private solarLevels = new Map<string, number>();
   private solarActive = false;
   private solarVisibility = true;
+  private cameraFrustumVisible = false;
+  private infrastructureLabelsVisible = false;
+  private infrastructureIpLabelsVisible = false;
+  private cameraGroundCoverageVisible = false;
   private roofO = 0;
   /** The roof stays put while the camera comes close (no lift, no fade): the editor's roof tool, or a choice of the viewer. */
   private keepRoof = false;
@@ -1040,6 +1057,33 @@ export class FloorplanViewer {
     this.invalidate();
   }
 
+  /** Toggle the camera's spatial frustum independently of lighting. */
+  setCameraCoverageVisible(on: boolean): void {
+    this.cameraFrustumVisible = on;
+    this.cameraGroundCoverageVisible = on;
+    for (const fv of this.floors) {
+      fv.cameraFrustumMesh.visible = this.cameraFrustumVisible && !this.lowQuality && (fv.cameraFrustumMesh.geometry.getAttribute("position")?.count ?? 0) > 0;
+      this.buildHalos(fv);
+    }
+    this.invalidate();
+  }
+
+  setInfrastructureVisibility(_wifi: boolean, _connections: boolean): void {}
+
+  setInfrastructureLabels(names:boolean,ips:boolean):void{this.infrastructureLabelsVisible=names;this.infrastructureIpLabelsVisible=ips;this.labelsDirty=true;for(const d of this.devices){const p=this.devicePins.get(pinKey(d));if(!p)continue;const infra=d.id.startsWith("infra-camera:")||!!d.furnitureId&&this.infrastructureFurnitureIds.has(d.furnitureId);const caption=infra?(ips?this.infrastructureIpByFurniture.get(d.furnitureId??"")??"":names?d.name:""):d.caption??"";p.el.querySelector(".fp3d-dev-name")!.textContent=caption;}this.invalidate();}
+  private infrastructureFurnitureIds=new Set<string>();
+  private infrastructureIpByFurniture=new Map<string,string>();
+  private cctvEquipmentVisible=true;
+  private networkEquipmentVisible=true;
+  setInfrastructureEquipmentVisibility(cctv:boolean,network:boolean):void{this.cctvEquipmentVisible=cctv;this.networkEquipmentVisible=network;for(const f of this.floors){f.cctvMesh.visible=cctv;f.networkMesh.visible=network;}this.invalidate();}
+  setInfrastructureDeviceLabels(furniture:Set<string>,ips:Map<string,string>):void{this.infrastructureFurnitureIds=furniture;this.infrastructureIpByFurniture=ips;this.setInfrastructureLabels(this.infrastructureLabelsVisible,this.infrastructureIpLabelsVisible);}
+
+  focusCamera(cameraId: string): void {
+    const d = this.devices.find(marker => marker.cameraEntity === cameraId);
+    if (!d) return;
+    this.controls.flyTo({ target: new Vector3(d.x, (this.floorMap.get(d.floorId)?.floor.elevation ?? 0) + d.y, d.z), radius: 5, phi: 1.0 });
+  }
+
   setExplode(explode: boolean): void {
     if (explode === this.explode) return;
     this.explode = explode;
@@ -1091,6 +1135,7 @@ export class FloorplanViewer {
     this.labelsDirty = true;
     this.effectFloors = new Set(devices.filter((d) => d.effect && d.glow).map((d) => d.floorId));
     this.deviceFloor = new Map(devices.map((d) => [d.id, d.floorId]));
+    for (const fv of this.floors) this.buildHalos(fv);
     const seen = new Set<string>();
     for (const d of devices) {
       const key = pinKey(d);
@@ -1111,7 +1156,8 @@ export class FloorplanViewer {
         pin.text = d.text;
         el.querySelector(".fp3d-dev-text")!.textContent = d.text;
       }
-      const caption = d.caption ?? "";
+      const infraPin=d.id.startsWith("infra-camera:")||!!d.furnitureId&&this.infrastructureFurnitureIds.has(d.furnitureId);
+      const caption = infraPin ? (this.infrastructureIpLabelsVisible ? this.infrastructureIpByFurniture.get(d.furnitureId??"")??"" : this.infrastructureLabelsVisible ? d.name : "") : d.caption ?? "";
       if (pin.caption !== caption) {
         pin.caption = caption;
         el.querySelector(".fp3d-dev-name")!.textContent = caption;
@@ -2758,7 +2804,7 @@ export class FloorplanViewer {
       back: () => this.options.onBack?.(),
       doubleTap: (x, y) => {
         const hit = this.floorId && this.options.onRoomDoubleTap ? this.pick(x, y) : null;
-        if (hit && !("entity" in hit) && hit.roomId) this.options.onRoomDoubleTap!(hit.floorId, hit.roomId);
+        if(hit&&"floorId" in hit&&hit.roomId)this.options.onRoomDoubleTap!(hit.floorId,hit.roomId);
         else this.options.onBack?.();
       },
     });
@@ -2836,6 +2882,8 @@ export class FloorplanViewer {
       // disposing them now let three.js delete the programs and compile them again on every rebuild – a
       // dragged corner with the 3D view beside the plan rebuilt (and recompiled) the house many times (#645)
       for (const m of Object.values(fv.materials)) this.retired.push(m);
+      fv.cameraFrustumMesh.geometry.dispose();
+      (fv.cameraFrustumMesh.material as Material).dispose();
       this.root.remove(fv.group);
     }
     this.floors = [];
@@ -3275,6 +3323,9 @@ export class FloorplanViewer {
       const coneMesh = new Mesh(new Geometry(), materials.cones);
       coneMesh.visible = false;
       coneMesh.renderOrder = 7;
+      const cameraFrustumMesh = new Mesh(new Geometry(), new MeshBasicMaterial({ color: 0x36c6d2, transparent: true, opacity: 0.2, side: DoubleSide, depthWrite: false }));
+      cameraFrustumMesh.visible = false;
+      cameraFrustumMesh.renderOrder = 8;
       const trailMesh = new Mesh(new Geometry(), materials.cones);
       trailMesh.visible = false;
       trailMesh.renderOrder = 7;
@@ -3314,6 +3365,9 @@ export class FloorplanViewer {
       // glass walls are drawn after everything opaque in the room, so doors and furniture show through
       const glassWalls = new Mesh(geo.walls, materials.glassWall);
       const wallMesh = new Mesh(geo.walls, materials.wall);
+      const cctvMesh=new Mesh(geo.infrastructureCctv,materials.wall);
+      const networkMesh=new Mesh(geo.infrastructureNetwork,materials.wall);
+      cctvMesh.visible=this.cctvEquipmentVisible;networkMesh.visible=this.networkEquipmentVisible;
       const solarPanels = new Group();
       if (geo.solar.attributes.position?.count) solarPanels.add(new Mesh(geo.solar, materials.wall));
       if (geo.solarLines.attributes.position?.count) solarPanels.add(new LineSegments(geo.solarLines, materials.lines));
@@ -3335,6 +3389,7 @@ export class FloorplanViewer {
         pattern,
         glowMesh,
         wallMesh,
+        cctvMesh,networkMesh,
         waterMesh,
         new LineSegments(geo.lines, materials.lines),
         framesMesh,
@@ -3349,6 +3404,7 @@ export class FloorplanViewer {
         spillMesh,
         haloMesh,
         coneMesh,
+        cameraFrustumMesh,
         trailMesh,
         fridgeMesh,
         pipeMesh,
@@ -3425,6 +3481,7 @@ export class FloorplanViewer {
         spillSig: "",
         haloMesh,
         coneMesh,
+        cameraFrustumMesh,
         trailMesh,
         fridgeMesh,
         pipeMesh,
@@ -3440,6 +3497,7 @@ export class FloorplanViewer {
         glassTris: [],
         blindTris: [],
         wallMesh,
+        cctvMesh,networkMesh,
         screenMesh,
         screenSig: "",
         screenPics: new Map(),
@@ -3764,8 +3822,11 @@ export class FloorplanViewer {
       }
       this.applyFloor(fv);
     }
+    this.updateInfrastructureOverlayPosition();
     this.invalidate();
   }
+
+  private updateInfrastructureOverlayPosition():void{for(const t of this.infrastructureRouteTracks){const a=this.floorMap.get(t.a),b=this.floorMap.get(t.b);if(!a||!b)continue;const p=t.geometry.getAttribute("position") as Float32BufferAttribute;p.setY(0,a.floor.elevation+a.y+t.ya);p.setY(1,b.floor.elevation+b.y+t.yb);p.needsUpdate=true;}}
 
   /** Move a floor group to its current offset and fade its materials. */
   private applyFloor(fv: FloorView): void {
@@ -3937,7 +3998,7 @@ export class FloorplanViewer {
     const shapeSig =
       this.wallMode +
       (this.lowQuality ? "L" : this.highQuality ? "H" : "M") +
-      lamps.map((d) => `${d.id},${d.lamp ?? d.model},${d.variant},${d.x},${d.z},${d.y},${d.rotation ?? 0},${d.roll ?? 0},${d.upright ? 1 : 0},${d.rise ?? 0},${d.size?.join("/")},${d.base ?? 0},${d.pack ?? ""},${d.mirror ? 1 : 0},${d.ownLook ? 1 : 0},${d.finish ? JSON.stringify(d.finish) : ""}`).join(";");
+      lamps.map((d) => `${d.id},${d.lamp ?? d.model},${d.variant},${d.x},${d.z},${d.y},${d.rotation ?? 0},${d.fov ?? 0},${d.vFov ?? 0},${d.reach ?? 0},${d.tilt ?? 0},${d.coverageColor ?? ""},${d.coverageOpacity ?? 0},${d.cameraEntity ?? ""},${d.cameraCoverage ? 1 : 0},${d.projectGround === false ? 0 : 1},${d.roll ?? 0},${d.upright ? 1 : 0},${d.rise ?? 0},${d.size?.join("/")},${d.base ?? 0},${d.pack ?? ""},${d.mirror ? 1 : 0},${d.ownLook ? 1 : 0},${d.finish ? JSON.stringify(d.finish) : ""}`).join(";");
     const glows = lamps.map((d) => this.glowOf(d));
     // a camera's motion is in it too: its wedge on the floor (buildHalos) turns red without any lamp changing (#901)
     const colorSig = lamps.map((d, i) => `${flash(d.id)},${glows[i] ? `${glows[i]!.level.toFixed(3)},${glows[i]!.color.map((c) => c.toFixed(3)).join("/")}` : "off"}${d.motion ? ",m" : ""}`).join(";");
@@ -3977,7 +4038,10 @@ export class FloorplanViewer {
       fv.lampMesh.geometry.setAttribute(LIT_ATTRIBUTE, new Float32BufferAttribute(new Float32Array(fv.lampShade.length), 1));
       fv.lampMesh.visible = buf.count > 0;
     }
-    if (colorSig === fv.lampColorSig) return;
+    if (colorSig === fv.lampColorSig) {
+      this.buildCameraFrusta(fv);
+      return;
+    }
     fv.lampColorSig = colorSig;
     const attr = fv.lampMesh.geometry.getAttribute("color") as Float32BufferAttribute;
     const colors = attr.array as Float32Array;
@@ -4152,6 +4216,7 @@ export class FloorplanViewer {
     if (this.lowQuality) {
       fv.haloMesh.visible = false;
       fv.coneMesh.visible = false;
+      fv.cameraFrustumMesh.visible = false;
       return;
     }
     const H = fv.floor.height;
@@ -4164,7 +4229,7 @@ export class FloorplanViewer {
     for (const d of this.devices) {
       if (d.model && d.floorId === fv.floor.id) {
         if (d.model === "camera_ceiling" && this.wallMode === "cut") continue;
-        if (d.cone === false) continue;
+        if (d.cone === false || (d.model === "camera_wall" && (!this.cameraGroundCoverageVisible || d.projectGround === false))) continue;
         // the camera's field of view on the floor: a faint wedge, red while it sees motion
         const a = (d.rotation ?? 0) * DEG;
         const dir: [number, number] = [-Math.sin(a), Math.cos(a)];
@@ -4382,6 +4447,47 @@ export class FloorplanViewer {
     fv.coneMesh.geometry = cones.geometry();
     fv.coneMesh.visible = cones.count > 0;
     fv.coneTris = coneTris;
+    this.buildCameraFrusta(fv);
+  }
+
+  private buildCameraFrusta(fv: FloorView): void {
+    const frusta = new GeoBuffer();
+    for (const d of this.devices) {
+      if (d.floorId !== fv.floor.id || !d.furnitureId || d.model !== "camera_wall" || !d.cameraCoverage) continue;
+      const hh = Math.max(0, Math.min(179, d.fov ?? 90)) * DEG / 2;
+      const vh = Math.max(1, Math.min(179, d.vFov ?? 60)) * DEG / 2;
+      const reach = Math.max(0, Math.min(100, d.reach ?? 8));
+      const tilt = Math.max(-90, Math.min(90, d.tilt ?? 20)) * DEG;
+      const a = (d.rotation ?? 0) * DEG;
+      const forward: [number, number, number] = [-Math.sin(a) * Math.cos(tilt), -Math.sin(tilt), Math.cos(a) * Math.cos(tilt)];
+      const right: [number, number, number] = [Math.cos(a), 0, Math.sin(a)];
+      const up: [number, number, number] = [Math.sin(a) * Math.sin(tilt), Math.cos(tilt), -Math.cos(a) * Math.sin(tilt)];
+      const origin: [number, number, number] = [d.x, d.y, d.z];
+      const corners: [number, number, number][] = [];
+      for (const side of [-1, 1]) for (const vertical of [-1, 1]) {
+        const raw = [forward[0] + right[0] * Math.tan(hh) * side + up[0] * Math.tan(vh) * vertical, forward[1] + up[1] * Math.tan(vh) * vertical, forward[2] + right[2] * Math.tan(hh) * side + up[2] * Math.tan(vh) * vertical];
+        const len = Math.hypot(...raw) || 1;
+        corners.push([origin[0] + raw[0] / len * reach, origin[1] + raw[1] / len * reach, origin[2] + raw[2] / len * reach]);
+      }
+      const [fbl, ftl, fbr, ftr] = corners;
+      const p = (side: number, vertical: number) => [origin[0] + forward[0] * 0.08 + right[0] * side * 0.025 + up[0] * vertical * 0.025, origin[1] + forward[1] * 0.08 + up[1] * vertical * 0.025, origin[2] + forward[2] * 0.08 + right[2] * side * 0.025 + up[2] * vertical * 0.025];
+      const ntl = p(-1, 1), ntr = p(1, 1), nbl = p(-1, -1), nbr = p(1, -1);
+      const color = new Color(d.coverageColor ?? "#36c6d2");
+      const tri = (p0: number[], p1: number[], p2: number[]) => frusta.tri(p0, p1, p2, color);
+      const q = (p0: number[], p1: number[], p2: number[], p3: number[]) => { tri(p0, p1, p2); tri(p0, p2, p3); };
+      q(nbl, nbr, fbr, fbl);
+      q(ntl, ntr, nbr, nbl);
+      q(ntl, nbl, fbl, ftl);
+      q(ntr, ftr, fbr, nbr);
+      q(ntl, ftl, ftr, ntr);
+      q(ftl, fbl, fbr, ftr);
+    }
+    fv.cameraFrustumMesh.geometry.dispose();
+    fv.cameraFrustumMesh.geometry = frusta.geometry();
+    const frustumMaterial = fv.cameraFrustumMesh.material as MeshBasicMaterial;
+    frustumMaterial.color.set(0xffffff);
+    frustumMaterial.opacity = this.devices.find(d => d.floorId === fv.floor.id && !!d.furnitureId && d.model === "camera_wall")?.coverageOpacity ?? 0.2;
+    fv.cameraFrustumMesh.visible = this.cameraFrustumVisible && frusta.count > 0;
   }
 
   /** Lit screens of a floor: a bright panel in the app colour and a faint glow around it. */
@@ -5065,10 +5171,10 @@ export class FloorplanViewer {
     return ray;
   }
 
-  private pick(x: number, y: number, devices = true): { entity: string } | { floorId: string; roomId: string | null } | null {
+  private pick(x: number, y: number, devices = true): { entity: string } | { furnitureId:string } | { floorId: string; roomId: string | null } | null {
     const ray = this.rayAt(x, y);
     const floors = this.activeFloors();
-    const meshes = floors.flatMap((f) => [f.lampMesh, f.coneMesh, f.framesMesh, f.glassMesh, f.blindsMesh, f.fridgeMesh, f.wallMesh, f.floorMesh].filter((m) => m.visible));
+    const meshes = floors.flatMap((f) => [f.lampMesh, f.coneMesh, f.framesMesh, f.glassMesh, f.blindsMesh, f.fridgeMesh, f.wallMesh, f.floorMesh, f.cctvMesh, f.networkMesh].filter((m) => m.visible));
     const inRange = (list: { id: string; start: number; end: number }[], tri: number) => list.find((r) => tri >= r.start && tri < r.end)?.id;
     for (const hit of ray.intersectObjects(meshes, false)) {
       if (hit.faceIndex == null) continue;
@@ -5092,6 +5198,9 @@ export class FloorplanViewer {
         const id = inRange(hit.object === fv.framesMesh ? fv.frameTris : hit.object === fv.glassMesh ? fv.glassTris : fv.blindTris, tri);
         const entity = id ? this.pickOpenings.get(id) : undefined;
         if (entity && devices) return { entity };
+      } else if(hit.object===fv.cctvMesh||hit.object===fv.networkMesh){
+        const ranges=hit.object===fv.cctvMesh?fv.geo.infrastructureCctvTris:fv.geo.infrastructureNetworkTris;
+        const id=inRange(ranges,tri);if(id)return{furnitureId:id};
       } else if (hit.object === fv.wallMesh) {
         const id = inRange(fv.geo.furnitureTris, tri);
         const entity = id ? this.pickFurniture.get(id) : undefined;
@@ -5197,6 +5306,7 @@ export class FloorplanViewer {
       if (roomless === "device") hit = device;
       else if (roomless) return void this.options.onRoomTap?.(roomless.floorId, null);
     }
+    if(hit&&"furnitureId" in hit){this.options.onFurnitureSelect?.(hit.furnitureId);return;}
     if (hit && "entity" in hit && this.furnish) {
       this.selectDevice(hit.entity);
       this.options.onDeviceSelect?.(hit.entity);
@@ -5219,11 +5329,12 @@ export class FloorplanViewer {
     const floors = this.activeFloors();
     // a TV's screen and its picture, a smart fridge's doors are meshes of their own: they belong to the item too
     const extra = (f: FloorView) => [f.screenMesh, f.fridgeMesh, ...[...f.screenPics.values()].map((p) => p.mesh)];
-    const meshes = floors.flatMap((f) => [f.lampMesh, f.wallMesh, ...extra(f)].filter((m) => m.visible));
+    const meshes = floors.flatMap((f) => [f.lampMesh, f.wallMesh,f.cctvMesh,f.networkMesh, ...extra(f)].filter((m) => m.visible));
     for (const hit of ray.intersectObjects(meshes, false)) {
       if (hit.faceIndex == null) continue;
       const fv = floors.find((f) => f.group === hit.object.parent || extra(f).includes(hit.object as Mesh))!;
       if (!fv) continue;
+      if(hit.object===fv.cctvMesh||hit.object===fv.networkMesh){const list=hit.object===fv.cctvMesh?fv.geo.infrastructureCctvTris:fv.geo.infrastructureNetworkTris;const id=list.find(r=>hit.faceIndex!>=r.start&&hit.faceIndex!<r.end)?.id;if(id)return{fv,id,y:hit.point.y};continue;}
       if (hit.object !== fv.lampMesh && hit.object !== fv.wallMesh) {
         const id = this.furnitureNear(fv, hit.point.x, hit.point.z);
         if (id) return { fv, id, y: hit.point.y };
@@ -6279,6 +6390,7 @@ export class FloorplanViewer {
       this.firework.step((now - this.fireworkAt) / 1000);
       this.fireworkAt = now;
     }
+    this.updateInfrastructureOverlayPosition();
     this.renderer.render(this.scene, this.camera);
     this.disposeRetired();
     // labels are placed only when the view or something on it moved (style writes cost layout)

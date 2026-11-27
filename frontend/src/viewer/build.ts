@@ -77,6 +77,11 @@ export interface FloorGeometry {
   holes: Vec2[][];
   /** Walls (with folding upper parts) and furniture. */
   walls: BufferGeometry;
+  /** Pack-based CCTV and network equipment, separated for independent visibility. */
+  infrastructureNetwork:BufferGeometry;
+  infrastructureCctv:BufferGeometry;
+  infrastructureNetworkTris:{id:string;start:number;end:number}[];
+  infrastructureCctvTris:{id:string;start:number;end:number}[];
   /** Native solar modules on this floor; kept separate so the property-view Show menu can toggle them without rebuilding. */
   solar: BufferGeometry;
   solarLines: BufferGeometry;
@@ -712,10 +717,16 @@ export function buildFloorGeometry(
 
   // lamps are drawn live by the viewer (they glow with their light)
   const furnitureTris: FloorGeometry["furnitureTris"] = [];
+  const infrastructureNetworkBuf=new GeoBuffer(),infrastructureCctvBuf=new GeoBuffer();
+  const infrastructureNetworkTris:FloorGeometry["furnitureTris"]=[],infrastructureCctvTris:FloorGeometry["furnitureTris"]=[];
   for (const item of floor.furniture) {
     if (isLamp(item.type)) continue;
-    const start = wallBuf.count;
-    const l0 = lines.p.length / 6;
+    const isInfrastructure=item.type.startsWith("pack:studio.techpanda.cctv_network:");
+    const isCctv=/:(analog_bullet_camera|ip_bullet_camera|wifi_camera|dome_camera|ptz_camera)$/.test(item.type);
+    const target=isInfrastructure?(isCctv?infrastructureCctvBuf:infrastructureNetworkBuf):wallBuf;
+    const targetLines=lines;
+    const start = target.count;
+    const l0 = targetLines.p.length / 6;
     let f = item;
     let base = mountBase(floor, f);
     if (GANG_TYPES.has(f.type)) {
@@ -724,13 +735,14 @@ export function buildFloorGeometry(
       f = { ...f, x: at.x, z: at.z };
       base = at.y;
     }
-    pushFurniture(wallBuf, lines, shadow, f, base);
+    pushFurniture(target, targetLines, shadow, f, base);
+    if(isInfrastructure)(isCctv?infrastructureCctvTris:infrastructureNetworkTris).push({id:f.id,start,end:target.count});
     // a wardrobe or a stair reaching above the cut height is cut with the walls, so it hides nothing behind it
     if (base + f.h > cut + 0.05) {
-      cutAbove(wallBuf, start, cut, FURN_OFFSET);
-      cutLinesAbove(lines, l0, cut, FURN_OFFSET);
+      cutAbove(target, start, cut, FURN_OFFSET);
+      cutLinesAbove(targetLines, l0, cut, FURN_OFFSET);
     }
-    furnitureTris.push({ id: f.id, start, end: wallBuf.count });
+    if(!isInfrastructure)furnitureTris.push({ id: f.id, start, end: target.count });
   }
 
   return {
@@ -738,6 +750,8 @@ export function buildFloorGeometry(
     roomTris,
     holes: cutHoles,
     walls: wallBuf.geometry(),
+    infrastructureNetwork:infrastructureNetworkBuf.geometry(),infrastructureCctv:infrastructureCctvBuf.geometry(),
+    infrastructureNetworkTris,infrastructureCctvTris,
     solar: solarBuf.geometry(),
     solarLines: solarLines.geometry(),
     water: waterBuf.geometry(),

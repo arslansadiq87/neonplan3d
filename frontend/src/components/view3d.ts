@@ -49,6 +49,7 @@ import { neonSignPicture, signLight, signLines } from "../neon-sign.ts";
 import { applianceIdle, applianceOf, type ApplianceKind, binColors, calendarItems, type DayEvent, fetchDayEvents, binDue, binNext, binOut, binOutToggleable, binTagsShown, doorsOf, fetchPickups, FinishedMemory, fridgeOpenTooLong, groupTags, hassCountry, isFinishedState, mailboxPost, nextFridgeCheck, plantThirsty, remainingMinutes, remainingText, servicesDue, setHouseholdCountry, wasteCalendars, isPackPlant, type HouseholdItem, type HouseholdTag, type Pickup } from "../household.ts";
 import { deviceSensors, energySummary, pvWithStrings, stringsPower, fetchSolarRows, fetchTodayChange, fieldLevels, fieldPowers, findConsumers, flowColor, flowSegments, gridPoint, powerSensorFor, readPower, solarCurvePath, solarDayFromStats, type Consumer, type EnergySummary, type StatRow } from "../energy.ts";
 import { fieldFace, fieldSize, roofFaces, roofWindowRoom } from "../solar.ts";
+import { furnitureCameraPose, readInfrastructure } from "../infrastructure.ts";
 import { type CustomButton, type EntityRef, DEFAULT_HOLOGRAM, lockAlong, type PoolPipe, type RoofWindow, type SolarField, uid } from "../model.ts";
 
 /** A hologram card: the house's balance on the main plant, one plant (a balcony plant) on its own, or a device. */
@@ -281,6 +282,15 @@ export class Fp3dView3d extends LitElement {
     explode: { type: Boolean },
     keepRoof: { attribute: false },
     solarVisibility: { attribute: false },
+    cameraCoverageVisible: { attribute: false },
+    wifiCoverageVisible: { attribute: false },
+    infrastructureConnectionsVisible: { attribute: false },
+    infrastructureLabelsVisible: { attribute: false },
+    infrastructureIpLabelsVisible: { attribute: false },
+    infrastructureRoutes: { attribute: false },
+    infrastructureWifi: { attribute: false },
+    cctvEquipmentVisible: { attribute: false },
+    networkEquipmentVisible: { attribute: false },
     surroundings: { attribute: false },
     plain: { attribute: false },
     markerMode: { attribute: false },
@@ -429,6 +439,17 @@ export class Fp3dView3d extends LitElement {
   declare keepRoof: boolean;
   /** Property View only: whether native solar fields are shown. */
   declare solarVisibility: boolean;
+  declare cameraCoverageVisible: boolean;
+  declare wifiCoverageVisible: boolean;
+  declare infrastructureConnectionsVisible: boolean;
+  declare infrastructureLabelsVisible: boolean;
+  declare infrastructureIpLabelsVisible: boolean;
+  declare infrastructureRoutes: unknown[];
+  declare infrastructureWifi: unknown[];
+  declare cctvEquipmentVisible:boolean;
+  declare networkEquipmentVisible:boolean;
+  renderInfrastructureRoutes(segments:unknown[],wifi:unknown[]){this.viewer?.renderInfrastructureRoutes(segments as never[],wifi as never[]);}
+  setInfrastructureOverlayVisibility(wifi:boolean,connections:boolean){this.renderInfrastructureRoutes(connections?this.infrastructureRoutes:[],wifi?this.infrastructureWifi:[]);}
   /** Draw the surroundings from the map; false: this view leaves them out (a card option). */
   declare surroundings: boolean;
   /** A plain floor plan: walls, doors and stairs, no furniture (the devices stay). */
@@ -793,6 +814,12 @@ export class Fp3dView3d extends LitElement {
     this.explode = true;
     this.keepRoof = false;
     this.solarVisibility = true;
+    this.cameraCoverageVisible = false;
+    this.wifiCoverageVisible = false;
+    this.infrastructureConnectionsVisible = false;
+    this.infrastructureLabelsVisible = false;
+    this.infrastructureIpLabelsVisible = false;
+    this.cctvEquipmentVisible=true;this.networkEquipmentVisible=true;
     this.surroundings = true;
     this.plain = false;
     this.markerMode = "important";
@@ -1241,6 +1268,11 @@ export class Fp3dView3d extends LitElement {
     if (changed.has("clean") || changed.has("_narrowStage")) this.scheduleThumbs();
     if (changed.has("floorId")) v.setFloor(this.floorId);
     if (changed.has("floorId") || changed.has("solarVisibility") || changed.has("building")) v.setSolarVisibility(this.floorId === null && (this.building?.floors.length ?? 0) > 1 ? this.solarVisibility : true);
+    if (changed.has("cameraCoverageVisible")) v.setCameraCoverageVisible(this.cameraCoverageVisible);
+    if (changed.has("infrastructureLabelsVisible") || changed.has("infrastructureIpLabelsVisible")) v.setInfrastructureLabels(this.infrastructureLabelsVisible,this.infrastructureIpLabelsVisible);
+    if(changed.has("infrastructureRoutes")||changed.has("infrastructureWifi")||changed.has("infrastructureConnectionsVisible")||changed.has("wifiCoverageVisible"))this.setInfrastructureOverlayVisibility(this.wifiCoverageVisible,this.infrastructureConnectionsVisible);
+    if (changed.has("building")) { const p=readInfrastructure(this.building); v.setInfrastructureDeviceLabels(new Set(p.devices.map(d=>d.furnitureId)),new Map(p.devices.map(d=>[d.furnitureId,d.interfaces?.flatMap(i=>i.addresses??[]).map(a=>a.address).filter(Boolean).join(", ")??""]))); }
+    if(changed.has("building")||changed.has("cctvEquipmentVisible")||changed.has("networkEquipmentVisible"))v.setInfrastructureEquipmentVisibility(this.cctvEquipmentVisible,this.networkEquipmentVisible);
     if (changed.has("roomId") && (this.roomId || changed.get("roomId"))) v.selectRoom(this.roomId);
     if (changed.has("wallMode")) v.setWallMode(this.wallMode);
     if (changed.has("keepView")) v.setKeepView(this.keepView);
@@ -1301,6 +1333,8 @@ export class Fp3dView3d extends LitElement {
     // pieces hidden by their condition have no light or pin either
     const b = this.conditioned();
     if (!v || !b || !this.hass) return;
+    v.setCameraCoverageVisible(this.cameraCoverageVisible);
+    v.setInfrastructureLabels(this.infrastructureLabelsVisible,this.infrastructureIpLabelsVisible);
     const hass = this.hass;
     if (force || !this.openingLinks || this.linkedRegistry !== hass.entities) {
       this.openingLinks = openingEntities(hass, b.floors);
@@ -1372,7 +1406,20 @@ export class Fp3dView3d extends LitElement {
     // what the modules add to the stage (Pool Pro: the water, the water in the pipes, the glow of the technical room)
     this.scene = anyModule() ? moduleScene(this.sceneHost(hass, b)) : [];
     const consumers = findConsumers(hass, b);
-    const deviceMarkers = buildMarkers(hass, b);
+    const infra = readInfrastructure(b);
+    const infraFurniture=new Set(infra.devices.map(d=>d.furnitureId));
+    const infraIps=new Map(infra.devices.map(d=>[d.furnitureId,d.interfaces?.flatMap(i=>i.addresses??[]).map(a=>a.address).filter(Boolean).join(", ")??""]));
+    v.setInfrastructureDeviceLabels(infraFurniture,infraIps);
+    const boundCameraIds = new Set(infra.devices.filter((d) => d.enabled !== false && d.bindings?.camera?.startsWith("camera.")).map((d) => d.bindings!.camera!));
+    const deviceMarkers = buildMarkers(hass, b).filter(marker => !boundCameraIds.has(marker.id)).map((marker) => {
+      const match = infra.devices.find((d) => d.enabled !== false && d.bindings?.camera === marker.id && d.category.startsWith("camera_"));
+      if (!match) return marker;
+      const floor = b.floors.find((f) => f.id === match.floorId);
+      const furniture = floor?.furniture.find((f) => f.id === match.furnitureId);
+      if (!floor || !furniture) return marker;
+      const pose = furnitureCameraPose({ x: furniture.x, z: furniture.z, rotation: furniture.rotation, floorElevation: floor.elevation, mountY: furniture.mount_y ?? 0, depth: furniture.d, itemHeight: furniture.h }, match.camera);
+      return { ...marker, floorId: floor.id, x: pose.x, z: pose.z, y: pose.y, rotation: pose.rotation, fov: pose.fov, vFov: pose.vFov, reach: pose.reach, tilt: pose.tilt, furnitureId: furniture.id, pack: furniture.type, size: [furniture.w, furniture.d, furniture.h] as [number, number, number], base: furniture.mount_y ?? 0, ownLook: true, cameraEntity: marker.id, cameraCoverage: true, coverageColor: match.camera?.coverageColor ?? "#36c6d2", coverageOpacity: Math.max(0, Math.min(1, match.camera?.coverageOpacity ?? 0.2)), projectGround: match.camera?.projectGround !== false, cone: true };
+    });
     const furniture = this.furnitureMarkers(hass, b, new Set(deviceMarkers.map((m) => m.id)), new Set(consumers.map((c) => c.powerEntity)));
     consumers.push(...furniture.consumers);
     this.lastConsumers = consumers;
@@ -3046,6 +3093,8 @@ export class Fp3dView3d extends LitElement {
     const consumers: Consumer[] = [];
     const screens = new Map<string, ScreenState>();
     const targets = new Map<string, string>();
+    const infra = readInfrastructure(b);
+    const infraByFurniture = new Map(infra.devices.map((d) => [d.furnitureId, d]));
     // devices placed on their own keep their pin; two pieces of furniture on one entity (a copy) each get theirs, like lamps (#688)
     const placed = new Set(taken);
     // Haushalt Pro: what is due now, for the glass card
@@ -3057,6 +3106,51 @@ export class Fp3dView3d extends LitElement {
     for (const floor of b.floors) {
       for (const f of floor.furniture) {
         const linked = this.furnitureLinks.get(f.id);
+        const infraDevice = infraByFurniture.get(f.id);
+        if (infraDevice?.enabled !== false && infraDevice && (infraDevice.category === "camera_analog" || infraDevice.category === "camera_ip")) {
+          const pose = furnitureCameraPose({ x: f.x, z: f.z, rotation: f.rotation, floorElevation: floor.elevation, mountY: f.mount_y ?? 0, depth: f.d, itemHeight: f.h }, infraDevice.camera);
+          const cameraEntity = infraDevice.bindings?.camera;
+          const motionState = infraDevice.bindings?.motion ? hass.states[infraDevice.bindings.motion] : undefined;
+          const availability = infraDevice.bindings?.availability ? hass.states[infraDevice.bindings.availability] : undefined;
+          const markerId = cameraEntity && cameraEntity.startsWith("camera.") ? cameraEntity : `infra-camera:${infraDevice.id}`;
+          const st = cameraEntity ? hass.states[cameraEntity] : undefined;
+          markers.push({
+            id: markerId,
+            floorId: floor.id,
+            roomId: roomAt(floor, pose.x, pose.z),
+            x: pose.x,
+            z: pose.z,
+            y: pose.y,
+            icon: iconSvg("camera"),
+            name: infraDevice.name || f.name || furnitureName(hass, f.type),
+            ownName: infraDevice.name || f.name || undefined,
+            text: st ? stateText(hass, st) : availability ? (isUnavailable(availability) ? "unavailable" : availability.state) : "",
+            active: motionState?.state === "on",
+            unavailable: !!st && isUnavailable(st) || !!availability && isUnavailable(availability),
+            glow: null,
+            model: "camera_wall",
+            ownLook: true,
+            cameraEntity: cameraEntity && cameraEntity.startsWith("camera.") ? cameraEntity : undefined,
+            cameraCoverage: true,
+            pack: f.type,
+            size: [f.w, f.d, f.h],
+            base: f.mount_y ?? 0,
+            furnitureId: f.id,
+            rotation: pose.rotation,
+            fov: pose.fov,
+            vFov: infraDevice.camera?.vFov ?? 60,
+            coverageColor: infraDevice.camera?.coverageColor ?? "#36c6d2",
+            coverageOpacity: Math.max(0, Math.min(1, infraDevice.camera?.coverageOpacity ?? 0.2)),
+            projectGround: infraDevice.camera?.projectGround !== false,
+            reach: pose.reach,
+            tilt: pose.tilt,
+            show: "always",
+            cone: true,
+            pin: !!cameraEntity,
+            fromFurniture: true,
+          });
+          if (cameraEntity) targets.set(f.id, markerId);
+        }
         // furniture with a state: a glowing plate on the item while its entity is on, occupied or home;
         // two entities light the halves (left/right of a bed, bottom/top of a bunk bed)
         const faces = this.stateFaces(hass, f);
@@ -6352,6 +6446,7 @@ export class Fp3dView3d extends LitElement {
     const kind = kindOf(entityId);
     // blinds have no single on/off: a tap opens their quick menu (up, positions, stop, down); a camera shows its picture
     if (kind === "cover" || kind === "camera") {
+      if (kind === "camera") this.viewer?.focusCamera(entityId);
       this._menu = { entity: entityId, x, y };
       return;
     }

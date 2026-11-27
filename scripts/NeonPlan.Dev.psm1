@@ -129,7 +129,8 @@ function Test-NeonPlanRemote {
     $release = Get-Content -Raw -LiteralPath (Join-Path $script:RepoRoot 'techpanda/release.json') | ConvertFrom-Json
     $remoteManifest = Invoke-NeonPlanPlink "cat $script:RemotePath/manifest.json"
     $remoteVersion = (($remoteManifest -join "`n") | ConvertFrom-Json).version
-    if ($remoteVersion -ne $localVersion -and $remoteVersion -ne $release.upstream_version) { throw "Installed version $remoteVersion is neither upstream baseline $($release.upstream_version) nor downstream target $localVersion. Stop and review compatibility." }
+    $acceptedVersions = @($localVersion, $release.upstream_version, $release.previous_downstream_version) | Where-Object { $_ }
+    if ($remoteVersion -notin $acceptedVersions) { throw "Installed version $remoteVersion is not the upstream baseline, previous downstream release, or current target. Stop and review compatibility." }
     $info = Invoke-NeonPlanPlink 'printf ''OS=''; . /etc/os-release; printf ''%s %s '' "$ID" "$VERSION_ID"; printf ''ARCH=''; uname -m; printf ''CONTAINER=''; docker inspect -f ''{{.Config.Image}}'' homeassistant; printf ''SUPERVISOR=''; docker ps --format ''{{.Names}}'' | grep -E ''^hassio_supervisor$'' || true'
     Write-Output "Downstream target: $localVersion; installed: $remoteVersion; official baseline: $($release.upstream_tag)"
     Write-Output ($info -join "`n")

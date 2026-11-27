@@ -487,6 +487,8 @@ export interface ModuleAlert {
 export type ModuleField =
   | { kind: "heading"; text: string }
   | { kind: "text"; text: string }
+  /** A short plain-text value (hostnames, IP addresses, labels); the host stores it only in the module's plan data. */
+  | { kind: "input"; label: string; value: string; placeholder?: string; set(v: string): void }
   | { kind: "entity"; label: string; value: string | null; auto?: string | null; filter(id: string): boolean; set(v: string | null): void }
   | { kind: "select"; label: string; value: string; options: { id: string; label: string }[]; set(v: string): void }
   | { kind: "check"; label: string; value: boolean; set(v: boolean): void }

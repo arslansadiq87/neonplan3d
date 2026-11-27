@@ -1364,6 +1364,8 @@ export interface Building {
   settings: BuildingSettings;
   energy: EnergySettings;
   presence: PresenceLink[];
+  /** Optional isolated downstream extension data, keyed by its stable module id. */
+  mods?: ModuleData | null;
   /** Card templates: a dashboard card names one (option `template`) and takes its options from here (absent: none). */
   card_templates?: CardTemplate[];
 }

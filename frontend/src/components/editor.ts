@@ -45,6 +45,7 @@ import { activeSections, sectionFloor, sectionOverhang, dormerParent, effectiveD
 import { bestFace, clampField, faceAt, faceCompass, fieldFace, fieldModules, GROUND, moveField, pointOnFace, proposeField, proposeGroundField, proposeWindow, proposeWallField, roofFaces, rowCounts, turnGroundField, fieldCenter, wallFaces, windowAsField, windowCorners, onFace, onField, rayOnFace, type RoofFace } from "../solar.ts";
 import type { SurfaceGrab, SurfaceRay } from "../viewer/viewer3d.ts";
 import { storedImageIds } from "../transfer.ts";
+import { duplicateInfrastructureFurniture, INFRASTRUCTURE_EQUIPMENT, INFRASTRUCTURE_MODULE_ID, readInfrastructure, removeInfrastructureFurniture } from "../infrastructure.ts";
 import { fromWall, furnitureOnWall, openingsOnWall, roomEdgeFrame, slideAlong, toWall, type WallFrame } from "../geometry/wall-frame.ts";
 import { type CarLinks, type Background, OUTDOOR_TOP, sidelightLayout, DEFAULT_WEATHER_EFFECTS, WEATHER_EFFECTS,
   normalizeBuilding,
@@ -939,6 +940,8 @@ export class Fp3dEditor extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.addEventListener("infrastructure-edit", this.onInfrastructureEdit as EventListener);
+    this.addEventListener("infrastructure-history", this.onInfrastructureHistory as EventListener);
     window.addEventListener("keydown", this.onKey);
     window.addEventListener("keyup", this.onShift);
     window.addEventListener("blur", this.onBlur);
@@ -946,6 +949,8 @@ export class Fp3dEditor extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.removeEventListener("infrastructure-edit", this.onInfrastructureEdit as EventListener);
+    this.removeEventListener("infrastructure-history", this.onInfrastructureHistory as EventListener);
     window.removeEventListener("keydown", this.onKey);
     window.removeEventListener("keyup", this.onShift);
     window.removeEventListener("blur", this.onBlur);
@@ -1423,6 +1428,14 @@ export class Fp3dEditor extends LitElement {
   private get floor(): Floor | undefined {
     return this._doc?.floors.find((f) => f.id === this._floorId);
   }
+
+  private onInfrastructureEdit = (event: CustomEvent<Building>): void => {
+    const incoming=event.detail;
+    if(!incoming||!this.isAdmin)return;
+    this.change(doc=>{for(const key of Object.keys(doc) as (keyof Building)[])delete (doc as unknown as Record<string,unknown>)[key];Object.assign(doc,structuredClone(incoming));});
+  };
+
+  private onInfrastructureHistory=(event:CustomEvent<"undo"|"redo">):void=>{if(event.detail==="undo")this.undo();else this.redo();};
 
   private get room(): Room | undefined {
     return this.floor?.rooms.find((r) => r.id === this._roomId);
@@ -5317,12 +5330,20 @@ export class Fp3dEditor extends LitElement {
       const fixed = set.some((x) => this.isFixedItem("furniture", x));
       if (!confirm(this.t(fixed ? "block_delete_fixed" : "block_delete", { n: set.length }))) return;
       const ids = new Set(set);
-      this.change((_, floor) => (floor.furniture = floor.furniture.filter((f) => !ids.has(f.id))));
+      this.change((doc, floor) => {
+        floor.furniture = floor.furniture.filter((f) => !ids.has(f.id));
+        const plan = removeInfrastructureFurniture(readInfrastructure(doc), ids);
+        if (doc.mods) doc.mods[INFRASTRUCTURE_MODULE_ID] = plan as unknown as Record<string, unknown>;
+      });
       this.selectItem("room", this._roomId);
       return;
     }
     if (!this.confirmFixedDelete("furniture", id)) return;
-    this.change((_, floor) => (floor.furniture = floor.furniture.filter((f) => f.id !== id)));
+    this.change((doc, floor) => {
+      floor.furniture = floor.furniture.filter((f) => f.id !== id);
+      const plan = removeInfrastructureFurniture(readInfrastructure(doc), new Set([id]));
+      if (doc.mods) doc.mods[INFRASTRUCTURE_MODULE_ID] = plan as unknown as Record<string, unknown>;
+    });
     this._furnitureId = null;
   }
 
@@ -5335,12 +5356,21 @@ export class Fp3dEditor extends LitElement {
       const items = this.floor!.furniture.filter((m) => set.includes(m.id));
       const blocks = new Map<string, string>();
       const copies = items.map((m) => ({ ...structuredClone(m), id: uid("furniture"), x: round(m.x + 0.3), z: round(m.z + 0.3), group: m.group ? (blocks.get(m.group) ?? blocks.set(m.group, uid("block")).get(m.group)!) : null, locked: null }));
-      this.change((_, floor) => floor.furniture.push(...copies));
+      this.change((doc, floor) => {
+        floor.furniture.push(...copies);
+        if (doc.mods?.[INFRASTRUCTURE_MODULE_ID]) {
+          const map = new Map(items.map((m, i) => [m.id, copies[i].id]));
+          doc.mods[INFRASTRUCTURE_MODULE_ID] = duplicateInfrastructureFurniture(readInfrastructure(doc), map, () => uid("infra")) as unknown as Record<string, unknown>;
+        }
+      });
       this.setMulti(copies.map((c) => c.id));
       return;
     }
     const copy = { ...structuredClone(f), id: uid("furniture"), x: round(f.x + 0.3), z: round(f.z + 0.3), group: this._single ? f.group : null };
-    this.change((_, floor) => floor.furniture.push(copy));
+    this.change((doc, floor) => {
+      floor.furniture.push(copy);
+      if (doc.mods?.[INFRASTRUCTURE_MODULE_ID]) doc.mods[INFRASTRUCTURE_MODULE_ID] = duplicateInfrastructureFurniture(readInfrastructure(doc), new Map([[f.id, copy.id]]), () => uid("infra")) as unknown as Record<string, unknown>;
+    });
     this.selectItem("furniture", copy.id);
   }
 
@@ -10557,6 +10587,8 @@ export class Fp3dEditor extends LitElement {
           return html`<h3>${f.text}</h3>`;
         case "text":
           return html`<p class="fp3d-sub fp3d-wide">${f.text}</p>`;
+        case "input":
+          return html`<label class="fp3d-field fp3d-wide">${f.label}<input type="text" .value=${f.value} placeholder=${f.placeholder ?? ""} ?disabled=${!admin} @change=${(e: Event) => f.set((e.target as HTMLInputElement).value.trim())} /></label>`;
         case "entity":
           return this.entitySelect(f.label, f.value, f.auto, this.entityOptions(f.filter), (v) => f.set(v));
         case "select":
@@ -12161,7 +12193,7 @@ export class Fp3dEditor extends LitElement {
         : nothing}
       ${isElectric(f.type) ? this.renderFurnitureLinks(f) : !NO_STATE_TYPES.has(f.type) ? html`<div class="fp3d-form fp3d-links">${this.renderStateLinks(f)}</div>` : nothing} ${GANG_TYPES.has(f.type) ? this.renderGangsForm(f) : nothing} ${TECH_TYPES.has(f.type) ? this.renderTechForm(f) : nothing} ${f.type === "parking" ? this.renderParkingForm(f) : nothing} ${f.type === "neon_sign" ? this.renderSignForm(f) : nothing} ${f.type === "waste_bin" || f.type === "mailbox" ? this.renderHouseholdForm(f) : this.renderHouseholdExtras(f)}
       ${this.renderShowIf(f)}
-      ${this.renderModuleFurnitureFields(f)}
+      ${INFRASTRUCTURE_EQUIPMENT.has(f.type) ? html`<button class="fp3d-btn" @click=${() => this.dispatchEvent(new CustomEvent("open-infrastructure-manager", { detail: f.id, bubbles: true, composed: true }))}>Manage</button>` : nothing} ${this.renderModuleFurnitureFields(f)}
       ${f.type.startsWith("pack:mastershort.vehicles:") && this.isAdmin
         ? html`<section>
             <p class="fp3d-sub">${this.t("vehicle_to_spot_hint")}</p>

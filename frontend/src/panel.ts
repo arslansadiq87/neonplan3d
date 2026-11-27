@@ -10,6 +10,7 @@ import "./components/phone-shell.ts";
 import type { Fp3dPhoneShell } from "./components/phone-shell.ts";
 import type { NavMoreItem } from "./components/phone-nav.ts";
 import { loadEditor } from "./load-editor.ts";
+import { loadInfrastructureManager } from "./load-infrastructure.ts";
 import "./components/plan-overview.ts";
 import "./components/plan-picker.ts";
 import { alertText, type Alert } from "./alerts.ts";
@@ -49,7 +50,7 @@ import type { FloorStack, Quality, WallMode } from "./viewer/viewer3d.ts";
 /** The corners of the clock, as arrows in the view menu (the full name is the button's title). */
 const CLOCK_ARROW: Record<Exclude<ClockPos, "off">, string> = { tl: "↖", tr: "↗", bl: "↙", br: "↘" };
 
-type Mode = "view" | "editor" | "extensions";
+type Mode = "view" | "editor" | "extensions" | "infrastructure";
 
 /** View preferences belong to the device (a wall tablet wants other settings than a desktop). */
 const prefs = {
@@ -92,6 +93,15 @@ export class Floorplan3dPanel extends LitElement {
     _explode: { state: true },
     _keepRoof: { state: true },
     _solarPanels: { state: true },
+    _cameraCoverage: { state: true },
+    _wifiCoverage: { state: true },
+    _networkConnections: { state: true },
+    _cctvEquipment: { state: true },
+    _networkEquipment: { state: true },
+    _deviceLabels: { state: true },
+    _ipLabels: { state: true },
+    _infraRoutes: { state: true },
+    _infraWifi: { state: true },
     _plain: { state: true },
     _roomBar: { state: true },
     _quality: { state: true },
@@ -150,6 +160,8 @@ export class Floorplan3dPanel extends LitElement {
   private offersChecked = false;
   /** The editor bundle is loaded (it is fetched the first time the editor opens). */
   private declare _editorReady: boolean;
+  private _infrastructureReady = false;
+  private _infraFocus = "";
   private declare _floorId: string | null;
   private declare _roomId: string | null;
   /** One walks through the house: the room panel steps aside. */
@@ -168,6 +180,15 @@ export class Floorplan3dPanel extends LitElement {
   private declare _explode: boolean;
   private declare _keepRoof: boolean;
   private declare _solarPanels: boolean;
+  private declare _cameraCoverage: boolean;
+  private declare _wifiCoverage: boolean;
+  private declare _networkConnections: boolean;
+  private declare _cctvEquipment: boolean;
+  private declare _networkEquipment: boolean;
+  private declare _deviceLabels: boolean;
+  private declare _ipLabels: boolean;
+  private declare _infraRoutes: unknown[];
+  private declare _infraWifi: unknown[];
   /** The plain floor plan without furniture, remembered on this device. */
   private declare _plain: boolean;
   /** The room bar at the bottom: off, the rooms, or the favourites and the rooms – remembered on this device. */
@@ -265,6 +286,14 @@ export class Floorplan3dPanel extends LitElement {
     this._explode = prefs.get("explode") !== "0";
     this._keepRoof = prefs.get("roof") === "1";
     this._solarPanels = prefs.get("solar_panels") !== "0";
+    this._cameraCoverage = prefs.get("camera_coverage") === "1";
+    this._wifiCoverage = prefs.get("infra_wifi") === "1";
+    this._networkConnections = prefs.get("infra_connections") === "1";
+    this._cctvEquipment = prefs.get("infra_cctv_equipment") !== "0";
+    this._networkEquipment = prefs.get("infra_network_equipment") !== "0";
+    this._deviceLabels = prefs.get("infra_labels") === "1";
+    this._ipLabels = prefs.get("infra_ip_labels") === "1";
+    this._infraRoutes=[];this._infraWifi=[];
     this._plain = prefs.get("plain") === "1";
     const bar = prefs.get("roombar");
     this._roomBar = bar === "rooms" || bar === "all" ? bar : "off";
@@ -349,6 +378,7 @@ export class Floorplan3dPanel extends LitElement {
     if (mode === "view") void this.data.flush();
     this._mode = mode;
     if (mode === "extensions") this.printOpened();
+    if (mode === "infrastructure") Promise.all([loadInfrastructureManager(),loadEditor()]).then(()=>{this._infrastructureReady=true;this._editorReady=true;this.requestUpdate();}).catch((err:unknown)=>{this.data.error=String(err);});
     countView(mode);
   }
 
@@ -1109,6 +1139,8 @@ export class Floorplan3dPanel extends LitElement {
             ? this.renderEditor(b)
             : this._mode === "extensions" && this.isAdmin
               ? this.renderExtensions()
+              : this._mode === "infrastructure" && this.isAdmin
+                ? this.renderInfrastructure(b)
               : this.renderView(this._site ? (this.siteBuilding() ?? b) : b)
           : nothing}
         ${this.renderGift()}
@@ -1206,17 +1238,28 @@ export class Floorplan3dPanel extends LitElement {
       );
       return html`<div class="fp3d-empty"><p>${this.t("loading")}</p></div>`;
     }
-    return html`<fp3d-extensions
+    return html`<div class="fp3d-body"><button class="fp3d-btn fp3d-primary" @click=${() => this.setMode("infrastructure")}>TechPanda Infrastructure Manager</button><fp3d-extensions
       class="fp3d-body"
       .hass=${this.hass}
       .packs=${this.data.packs}
       .building=${this.data.building}
-      @building-edit=${(e: CustomEvent<Building>) => this.data.edit(e.detail)}
+      @infrastructure-edit=${(e: CustomEvent<Building>) => this.data.edit(e.detail)}
       @open-fun-settings=${() => this.openFunSettings()}
       @packs-changed=${() => void this.data.reloadPacks()}
       @offers-seen=${() => (this._newOffers = 0)}
       @packs-ready=${(e: CustomEvent<number>) => (this._readyPacks = e.detail)}
-    ></fp3d-extensions>`;
+    ></fp3d-extensions></div>`;
+  }
+
+  private renderInfrastructure(b: Building) {
+    if (!this._infrastructureReady) return html`<div class="fp3d-empty"><p>${this.t("loading")}</p></div>`;
+    return html`<div style="height:100%;position:relative"><div style="display:none">${this.renderEditor(b)}</div><techpanda-infrastructure-manager class="fp3d-body" .hass=${this.hass} .building=${b} .selected=${this._infraFocus}
+      @infrastructure-edit=${(e: CustomEvent<Building>) => this.renderRoot.querySelector("fp3d-editor")?.dispatchEvent(new CustomEvent("infrastructure-edit", {detail:e.detail}))}
+      @infrastructure-history=${(e: CustomEvent<"undo"|"redo">) => this.renderRoot.querySelector("fp3d-editor")?.dispatchEvent(new CustomEvent("infrastructure-history", {detail:e.detail}))}
+      @close-manager=${() => this.setMode("editor")}
+      @locate-equipment=${(e: CustomEvent<{floorId:string;furnitureId:string}>) => { this._mode="editor"; this.requestUpdate(); setTimeout(()=>{ const ed=this.renderRoot.querySelector("fp3d-editor") as HTMLElement & {_floorId?:string;_furnitureId?:string;_roomId?:string;requestUpdate?:()=>void}; if(ed){ed._floorId=e.detail.floorId;ed._furnitureId=e.detail.furnitureId;ed._roomId=undefined;ed.requestUpdate?.();} },0); }}
+      @infrastructure-overlay=${(e:CustomEvent<{routes:unknown[];wifi:unknown[]}>)=>{this._infraRoutes=e.detail.routes;this._infraWifi=e.detail.wifi;}}
+    ></techpanda-infrastructure-manager></div>`;
   }
 
   private renderEditor(b: Building) {
@@ -1247,6 +1290,7 @@ export class Floorplan3dPanel extends LitElement {
       }}
       @mic-probe=${() => loadVoice().then(() => (this._micProbe = true)).catch(() => undefined)}
       @open-extensions=${() => this.setMode("extensions")}
+      @open-infrastructure-manager=${(e: CustomEvent<string>) => { this._infraFocus = e.detail; this.setMode("infrastructure"); }}
       @building-changed=${(e: CustomEvent<{ building: Building }>) => this.data.edit(e.detail.building)}
     ></fp3d-editor>`;
   }
@@ -1377,6 +1421,15 @@ export class Floorplan3dPanel extends LitElement {
           .explode=${this._explode}
           .keepRoof=${this._keepRoof}
           .solarVisibility=${this._floorId === null ? this._solarPanels : true}
+          .cameraCoverageVisible=${this._cameraCoverage}
+          .cctvEquipmentVisible=${this._cctvEquipment}
+          .networkEquipmentVisible=${this._networkEquipment}
+          .infrastructureLabelsVisible=${this._deviceLabels}
+          .infrastructureIpLabelsVisible=${this._ipLabels}
+          .infrastructureRoutes=${this._infraRoutes}
+          .infrastructureWifi=${this._infraWifi}
+          .wifiCoverageVisible=${this._wifiCoverage}
+          .infrastructureConnectionsVisible=${this._networkConnections}
           .plain=${this._plain}
           .markerMode=${this._markers}
           .pinSize=${this._pinSize}
@@ -1495,6 +1548,13 @@ export class Floorplan3dPanel extends LitElement {
                 <button aria-pressed=${!this._explode} @click=${() => this.setExplode(false)}>${this.t("floors_stacked")}</button>
               </div>`
             : nothing}
+          <button class="fp3d-chip" aria-pressed=${this._cameraCoverage} title="Show or hide estimated camera field of view" @click=${() => { this._cameraCoverage = !this._cameraCoverage; prefs.set("camera_coverage", this._cameraCoverage ? "1" : "0"); const view = this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & { cameraCoverageVisible?: boolean } | null; if (view) view.cameraCoverageVisible = this._cameraCoverage; }}>◉ Camera field of view</button>
+          <button class="fp3d-chip" aria-pressed=${this._networkConnections} @click=${() => {this._networkConnections=!this._networkConnections;prefs.set("infra_connections",this._networkConnections?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {infrastructureConnectionsVisible?:boolean}|null;if(v)v.infrastructureConnectionsVisible=this._networkConnections;}}>Network connections</button>
+          <button class="fp3d-chip" aria-pressed=${this._cctvEquipment} @click=${() => {this._cctvEquipment=!this._cctvEquipment;prefs.set("infra_cctv_equipment",this._cctvEquipment?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {cctvEquipmentVisible?:boolean}|null;if(v)v.cctvEquipmentVisible=this._cctvEquipment;}}>CCTV equipment</button>
+          <button class="fp3d-chip" aria-pressed=${this._networkEquipment} @click=${() => {this._networkEquipment=!this._networkEquipment;prefs.set("infra_network_equipment",this._networkEquipment?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {networkEquipmentVisible?:boolean}|null;if(v)v.networkEquipmentVisible=this._networkEquipment;}}>Network equipment</button>
+          <button class="fp3d-chip" aria-pressed=${this._deviceLabels} @click=${() => {this._deviceLabels=!this._deviceLabels;prefs.set("infra_labels",this._deviceLabels?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {infrastructureLabelsVisible?:boolean}|null;if(v)v.infrastructureLabelsVisible=this._deviceLabels;}}>Device labels</button>
+          <button class="fp3d-chip" aria-pressed=${this._ipLabels} @click=${() => {this._ipLabels=!this._ipLabels;prefs.set("infra_ip_labels",this._ipLabels?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {infrastructureIpLabelsVisible?:boolean}|null;if(v)v.infrastructureIpLabelsVisible=this._ipLabels;}}>IP labels</button>
+          <button class="fp3d-chip" aria-pressed=${this._wifiCoverage} @click=${() => {this._wifiCoverage=!this._wifiCoverage;prefs.set("infra_wifi",this._wifiCoverage?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {wifiCoverageVisible?:boolean}|null;if(v)v.wifiCoverageVisible=this._wifiCoverage;}}>Estimated Wi-Fi</button>
           ${!this._floorId && b.settings.roof.type !== "none"
             ? html`<div class="fp3d-seg">
                 <button aria-pressed=${this._keepRoof} title=${this.t("roof_keep_hint")} @click=${() => this.setKeepRoof(!this._keepRoof)}>${this.t("roof_keep")}</button>

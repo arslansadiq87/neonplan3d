@@ -5,14 +5,13 @@
   "downstream_owner": "arslansadiq87",
   "downstream_repository": "neonplan3d",
   "downstream_branch": "techpanda-custom",
-  "downstream_version": "4.0.2.3",
-  "release_tag": "v4.0.2.3",
-  "release_status": "published",
-  "release_commit": "6a04ed72726e1dd17accc096d92fc4d1f98a6f7f",
-  "ci_run": "https://github.com/arslansadiq87/neonplan3d/actions/runs/45896771613",
+  "previous_downstream_version": "4.0.2.3",
+  "downstream_version": "4.0.2.4b1",
+  "release_tag": "v4.0.2.4b1",
+  "release_status": "testing_prerelease_prepared",
   "assets_sha256": {
-    "neonplan3d.zip": "60a751f614060826e9818c34d254305405f20fc8d88531b81d880b70a0695dbd",
-    "techpanda-water-tanks-v2.fp3dpack": "0a708221e4bf904e11cd074eb51a021fcad562a1493e6f5cf1f06c2616dc78de"
+    "neonplan3d.zip": "e61e39670135cbb44168e6e2851bde0e6932fbc50d94d371fb34fbdedfd331cd",
+    "techpanda-cctv-network.fp3dpack": "463be22ae94313a47b43af53cb8211026f1645d642d9db9fc8afd9a9d748c148"
   },
   "runtime_overlay_paths": [
     "packs.py",
@@ -20,6 +19,7 @@
     "frontend/neonplan3d.js",
     "frontend/neonplan3d-3d.js",
     "frontend/neonplan3d-editor.js",
+    "frontend/neonplan3d-infrastructure.js",
     "frontend/neonplan3d-card-editor.js"
   ]
 }
