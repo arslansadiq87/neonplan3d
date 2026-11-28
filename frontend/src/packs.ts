@@ -176,6 +176,9 @@ export function packType(packId: string, itemId: string): string {
   return `pack:${packId}:${itemId}`;
 }
 
+/** Stable furniture type for TechPanda's below-ground concrete tank. */
+export const UNDERGROUND_TANK_TYPE = "pack:studio.techpanda.water_tanks:underground_concrete_water_tank";
+
 export function isPackType(type: string): boolean {
   return type.startsWith("pack:");
 }

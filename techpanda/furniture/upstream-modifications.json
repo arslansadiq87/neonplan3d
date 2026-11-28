@@ -408,6 +408,108 @@
       "change": "Regenerated for decorative Smart RGB fixtures to remain excluded from conventional room-light classification while normal lamps are unchanged.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Allow the existing furniture mounting-height control to accept the backend-supported -5 m lower bound for below-ground placement.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/building-controller.ts",
+      "change": "Clamp saved furniture mounting heights to the backend-supported -5 m to 10 m range.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
+      "change": "Regenerated main frontend bundle for the existing furniture mounting control's below-ground range and bounded save normalization.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/build.mjs",
+      "change": "Split the viewer's lazy underground inspection module and shared chunk into packageable ESM files while retaining the established viewer bundle budget.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/underground-inspection.ts",
+      "change": "Provide lazy underground tank detection, rotated floor cutouts, calibrated percent/depth/volume measurement and read-only indicator values.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/underground-tank-settings.ts",
+      "change": "Show underground tank measurement configuration, internal geometry/capacity, remaining capacity and read-only status entities in the editor.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/editor.ts",
+      "change": "Expose underground tank settings for a selected tank and allow resizing while preserving its configured top elevation.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Pass the persisted underground inspection state into the viewer and rebuild live state on toggle changes.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/packs.ts",
+      "change": "Export the stable underground tank type and preserve normalized negative mount height through existing furniture support.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/build.ts",
+      "change": "Build temporary localized floor holes above underground tank footprints and suppress underground furniture geometry when inspection is off.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Lazy-load tank inspection helpers, rebuild floor cutouts, gate underground visuals and water on valid sensor readings, and preserve floor-local transforms.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add the persisted default-off Underground tanks Show-menu control and pass its preference to the production viewer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+      "change": "Regenerated viewer entry with the lazy underground inspection loader and dynamic chunk references.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/chunks/chunk-ZLS4GFIZ.js",
+      "change": "Generated shared viewer geometry dependency for the lazy underground inspection chunk.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/chunks/underground-inspection-NEBRJLE7.js",
+      "change": "Generated lazy underground inspection module for floor cutouts and water measurement.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+      "change": "Generated editor bundle with tank measurement, capacity and read-only status configuration.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
+      "change": "Regenerated main bundle with persisted underground inspection toggle and tank editor support.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     }
   ],
   "custom_source_outside_runtime": "techpanda/furniture/",

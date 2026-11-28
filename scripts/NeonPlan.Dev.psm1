@@ -64,7 +64,9 @@ function Get-NeonPlanDeployArtifact {
     foreach ($relative in $release.runtime_overlay_paths) {
         $sourceFile = Join-Path $script:Integration $relative
         if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf)) { throw "Runtime overlay file is missing: $relative" }
-        Copy-Item -LiteralPath $sourceFile -Destination (Join-Path $stage $relative) -Force
+        $destination = Join-Path $stage $relative
+        $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination)
+        Copy-Item -LiteralPath $sourceFile -Destination $destination -Force
     }
     $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $artifact)
     if (Test-Path -LiteralPath $artifact) { Remove-Item -LiteralPath $artifact -Force }

@@ -5,14 +5,15 @@
     "downstream_owner":  "arslansadiq87",
     "downstream_repository":  "neonplan3d",
     "downstream_branch":  "techpanda-custom",
-    "previous_downstream_version":  "4.0.2.4b5",
-    "downstream_version":  "4.0.2.4b6",
-    "release_tag":  "v4.0.2.4b6",
-    "release_status":  "published_testing_prerelease",
+    "previous_downstream_version":  "4.0.2.4b6",
+    "downstream_version":  "4.0.2.4b7",
+    "release_tag":  "v4.0.2.4b7",
+    "release_status":  "prepared_testing_prerelease",
     "assets_sha256":  {
-                          "neonplan3d.zip":  "989ebedf425815ff8a675f45e54da13192330976ee2134033376db4afb407eaa",
+                          "neonplan3d.zip":  "5a0218b11d70df09c00eeb220b67672b8ac52720bdbcefc444056242a0b03995",
+                          "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93",
                           "techpanda-smart-rgb-ha-examples.zip":  "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd",
-                          "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93"
+                          "techpanda-water-tanks-v4.fp3dpack":  "0ba21da74596f9a3cb14feb9d209fa6788481e6c34e0789439e86382fc15e670"
                       },
     "runtime_overlay_paths":  [
                                   "packs.py",
@@ -23,24 +24,27 @@
                                   "frontend/neonplan3d-infrastructure.js",
                                   "frontend/neonplan3d-card-editor.js",
                                   "frontend/neonplan3d-smart-rgb.js",
-                                  "frontend/neonplan3d-timetravel.js"
+                                  "frontend/neonplan3d-timetravel.js",
+                                  "frontend/chunks/chunk-ZLS4GFIZ.js",
+                                  "frontend/chunks/underground-inspection-NEBRJLE7.js"
                               ],
     "stable_rollback_version":  "4.0.2.3",
     "pending_runtime_overlay_paths":  [
 
                                       ],
-    "release_notes":  "techpanda/release-notes-v4.0.2.4b6.md",
-    "checksums_file":  "techpanda/dist/SHA256SUMS-v4.0.2.4b6.txt",
+    "release_notes":  "techpanda/release-notes-v4.0.2.4b7.md",
+    "checksums_file":  "techpanda/dist/SHA256SUMS-v4.0.2.4b7.txt",
     "release_assets":  [
                            "neonplan3d.zip",
                            "techpanda-smart-rgb-lighting-v2.fp3dpack",
                            "techpanda-smart-rgb-ha-examples.zip",
-                           "SHA256SUMS-v4.0.2.4b6.txt"
+                           "techpanda-water-tanks-v4.fp3dpack",
+                           "SHA256SUMS-v4.0.2.4b7.txt"
                        ],
     "frontend_bundle_sizes_kb":  {
-                                     "neonplan3d.js":  795.4,
-                                     "neonplan3d-3d.js":  939.6,
-                                     "neonplan3d-editor.js":  1154.1,
+                                     "neonplan3d.js":  803.0,
+                                     "neonplan3d-3d.js":  932.4,
+                                     "neonplan3d-editor.js":  1154.6,
                                      "neonplan3d-infrastructure.js":  46.7,
                                      "neonplan3d-smart-rgb.js":  52.3
                                  }

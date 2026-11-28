@@ -5,7 +5,7 @@
   "name": "TechPanda Water Tanks",
   "publisher": "TechPanda",
   "licensee": null,
-  "release": 3,
+  "release": 4,
   "instance": null,
   "description": "Native furniture pack for rooftop and utility water storage and treatment.",
   "features": [],
@@ -131,6 +131,47 @@
         {"shape": "cyl","axis": "x","x": -0.32,"z": -0.3,"w": 0.12,"d": 0.065,"y": 0.67,"h": 0.065,"color": "#3c8da0","top": "#56bacb"},
         {"shape": "cyl","axis": "x","x": 0.42,"z": 0.02,"w": 0.12,"d": 0.065,"y": 0.73,"h": 0.065,"color": "#2f8499","top": "#50bbcf"},
         {"shape": "cyl","axis": "x","x": 0.4,"z": 0.03,"w": 0.12,"d": 0.065,"y": 0.17,"h": 0.065,"color": "#61768a","top": "#8798a7"}
+      ]
+    },
+    {
+      "id": "underground_concrete_water_tank",
+      "name": {"en": "Underground Concrete Water Tank"},
+      "size": [3.0, 2.0, 2.0],
+      "mount": "floor",
+      "group": "underground_water_storage",
+      "room": ["outdoor", "utility"],
+      "tags": ["water tank", "underground", "concrete", "storage", "level"],
+      "symbol": [{"shape": "rect", "x": 0, "z": 0, "w": 0.94, "d": 0.94}],
+      "slots": [
+        {"id": "level", "name": {"en": "Water level (%)"}, "domains": ["sensor"]},
+        {"id": "depth", "name": {"en": "Water depth"}, "domains": ["sensor"]},
+        {"id": "volume", "name": {"en": "Water volume"}, "domains": ["sensor"]},
+        {"id": "pump", "name": {"en": "Pump status"}, "domains": ["binary_sensor", "sensor", "switch"]},
+        {"id": "low", "name": {"en": "Low water indicator"}, "domains": ["binary_sensor", "sensor"]},
+        {"id": "overflow", "name": {"en": "Overflow indicator"}, "domains": ["binary_sensor", "sensor"]}
+      ],
+      "parts": [
+        {"shape": "box", "x": 0, "z": 0, "w": 0.96, "d": 0.96, "y": 0, "h": 0.075, "color": "#263749", "top": "#354a60", "edges": "faint"},
+        {"shape": "box", "x": -0.46, "z": 0, "w": 0.08, "d": 0.92, "y": 0.075, "h": 0.85, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0.46, "z": 0, "w": 0.08, "d": 0.92, "y": 0.075, "h": 0.85, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0, "z": -0.46, "w": 0.84, "d": 0.08, "y": 0.075, "h": 0.85, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0, "z": 0.46, "w": 0.84, "d": 0.08, "y": 0.075, "h": 0.14, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0, "z": 0.46, "w": 0.84, "d": 0.08, "y": 0.79, "h": 0.135, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": -0.36, "z": 0.46, "w": 0.12, "d": 0.08, "y": 0.215, "h": 0.575, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0.36, "z": 0.46, "w": 0.12, "d": 0.08, "y": 0.215, "h": 0.575, "color": "#293b50", "top": "#3a5067", "edges": "faint"},
+        {"shape": "box", "x": 0, "z": 0, "w": 0.90, "d": 0.90, "y": 0.12, "h": 0.012, "color": "#182536"},
+        {"shape": "box", "x": 0, "z": 0, "w": 0.82, "d": 0.82, "y": 0.12, "h": 0.72, "color": "#167da7", "top": "#42c3e2", "bind": {"slot": "level", "kind": "level"}},
+        {"shape": "box", "x": 0, "z": -0.30, "w": 0.58, "d": 0.32, "y": 0.925, "h": 0.075, "color": "#1e2e40", "top": "#2d7187", "edges": true},
+        {"shape": "box", "x": 0, "z": 0.29, "w": 0.90, "d": 0.32, "y": 0.925, "h": 0.075, "color": "#1e2e40", "top": "#2d7187", "edges": true},
+        {"shape": "box", "x": -0.32, "z": 0.035, "w": 0.26, "d": 0.35, "y": 0.925, "h": 0.075, "color": "#1e2e40", "top": "#2d7187", "edges": true},
+        {"shape": "box", "x": 0.32, "z": 0.035, "w": 0.26, "d": 0.35, "y": 0.925, "h": 0.075, "color": "#1e2e40", "top": "#2d7187", "edges": true},
+        {"shape": "box", "x": 0, "z": 0.035, "w": 0.24, "d": 0.32, "y": 0.925, "h": 0.075, "color": "#354a60", "top": "#536b82", "edges": true},
+        {"shape": "cyl", "axis": "x", "x": -0.48, "z": -0.26, "w": 0.17, "d": 0.06, "y": 0.68, "h": 0.06, "color": "metal", "top": "#5b7185", "edges": true},
+        {"shape": "cyl", "axis": "x", "x": 0.48, "z": 0.26, "w": 0.17, "d": 0.06, "y": 0.20, "h": 0.06, "color": "metal", "top": "#5b7185", "edges": true},
+        {"shape": "cyl", "axis": "x", "x": 0.48, "z": -0.26, "w": 0.14, "d": 0.05, "y": 0.79, "h": 0.05, "color": "#2f8fa8", "top": "#42c3e2", "edges": true},
+        {"shape": "cyl", "x": -0.40, "z": 0.46, "w": 0.035, "d": 0.035, "y": 0.72, "h": 0.035, "color": "#35a989", "bind": {"slot": "pump", "kind": "blink"}},
+        {"shape": "cyl", "x": -0.40, "z": 0.46, "w": 0.035, "d": 0.035, "y": 0.62, "h": 0.035, "color": "#ffb347", "bind": {"slot": "low", "kind": "blink"}},
+        {"shape": "cyl", "x": -0.40, "z": 0.46, "w": 0.035, "d": 0.035, "y": 0.52, "h": 0.035, "color": "#ff5f5f", "bind": {"slot": "overflow", "kind": "blink"}}
       ]
     }
   ]

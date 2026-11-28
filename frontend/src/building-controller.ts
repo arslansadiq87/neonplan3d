@@ -214,9 +214,9 @@ export class BuildingController implements ReactiveController {
     this.pending = null;
     // the plan the edit belongs to (a switch waits for this save)
     const plan = this.planId;
-    // a mount height above what the backend accepts (10 m – "40" typed as centimetres) would refuse every save,
-    // also of an edit kept from earlier: it is brought into range here
-    for (const f of building.floors) for (const m of f.furniture) if (m.mount_y != null && m.mount_y > 10) m.mount_y = 10;
+    // A mount height outside the backend's -5 m to 10 m range would refuse every save; edits kept from earlier are
+    // brought into range here.
+    for (const f of building.floors) for (const m of f.furniture) if (m.mount_y != null) m.mount_y = Math.max(-5, Math.min(10, m.mount_y));
     this.saveState = "saving";
     this.host.requestUpdate();
     this.saving = (async () => {

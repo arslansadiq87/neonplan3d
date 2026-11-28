@@ -19,7 +19,8 @@ const common = {
   logLevel: "info",
 };
 
-const viewerConfig = { ...common, entryPoints: ["src/viewer/viewer3d.ts"], outfile: `${out}/neonplan3d-3d.js` };
+const viewerOutfile = `${out}/neonplan3d-3d.js`;
+const viewerConfig = { ...common, entryPoints: { "neonplan3d-3d": "src/viewer/viewer3d.ts" }, outdir: out, entryNames: "[name]", chunkNames: "chunks/[name]-[hash]", splitting: true };
 // the card's visual editor only loads in the dashboard's card dialog
 // the language files (lang/*.json) are fetched with a hash of their content, so a new text is never stale
 const LANGS = ["fr", "es", "nl", "it", "hu", "da", "sv", "nb", "nn", "fi", "cs", "pl", "ro", "sl", "sk", "zh", "pt", "tr"];
@@ -199,13 +200,13 @@ if (watch) {
   await build(smartRgbConfig);
   await build(osmConfig);
   await build(cardEditorConfig);
-  const editor = editorConfig(hashOf(viewerConfig.outfile), hashOf(locateConfig.outfile), hashOf(cardEditorConfig.outfile), hashOf(osmConfig.outfile));
+  const editor = editorConfig(hashOf(viewerOutfile), hashOf(locateConfig.outfile), hashOf(cardEditorConfig.outfile), hashOf(osmConfig.outfile));
   await build(editor);
   await build(timeTravelConfig);
   await build(funConfig);
   await build(voiceConfig);
   await build(importConfig);
-  await build(mainConfig(hashOf(viewerConfig.outfile), hashOf(editor.outfile), hashOf(cardEditorConfig.outfile), hashOf(timeTravelConfig.outfile), hashOf(funConfig.outfile), hashOf(voiceConfig.outfile), hashOf(locateConfig.outfile), hashOf(infrastructureConfig.outfile), hashOf(smartRgbConfig.outfile)));
+  await build(mainConfig(hashOf(viewerOutfile), hashOf(editor.outfile), hashOf(cardEditorConfig.outfile), hashOf(timeTravelConfig.outfile), hashOf(funConfig.outfile), hashOf(voiceConfig.outfile), hashOf(locateConfig.outfile), hashOf(infrastructureConfig.outfile), hashOf(smartRgbConfig.outfile)));
   let over = false;
   // old Fire-tablet WebViews (Chrome before 91, e.g. Fully Kiosk on a Fire 7) throw on an optional call with spread
   // arguments, `a?.b(...x)` – the roof failed there; lowering the target for it would cost ~11 KB, so it is banned

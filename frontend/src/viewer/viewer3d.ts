@@ -707,6 +707,9 @@ export class FloorplanViewer {
   private solarLevels = new Map<string, number>();
   private solarActive = false;
   private solarVisibility = true;
+  /** Whether below-ground tank models and their floor apertures are shown for inspection. */
+  private undergroundInspection = false;
+  private undergroundTools: typeof import("../underground-inspection.ts") | null = null;
   private cameraFrustumVisible = false;
   private infrastructureLabelsVisible = false;
   private infrastructureIpLabelsVisible = false;
@@ -733,7 +736,7 @@ export class FloorplanViewer {
   private spinSpeeds = new Map<string, number>();
   private spinMat: MeshBasicMaterial | null = null;
   /** Live parts of pack items (3.4): a model per item and group (slot + kind) at its pivot, moved to its value. */
-  private packLive = new Map<string, { group: Group; inner: Group; mesh: Mesh; edges: LineSegments | null; mat: MeshBasicMaterial | null; bind: PartBind; depth: number; rest: number; floorId: string; y: number; sig: string; target: number; value: number }>();
+  private packLive = new Map<string, { group: Group; inner: Group; mesh: Mesh; edges: LineSegments | null; mat: MeshBasicMaterial | null; bind: PartBind; depth: number; rest: number; floorId: string; y: number; sig: string; target: number; value: number; underground: boolean }>();
   private liveValues = new Map<string, number>();
   private liveLast = 0;
   private fanLast = 0;
@@ -1049,6 +1052,15 @@ export class FloorplanViewer {
   setKeepRoof(on: boolean): void {
     if (on === this.keepRoof) return;
     this.keepRoof = on;
+    this.invalidate();
+  }
+
+  /** Rebuild only when the inspection mode changes; floor cutouts remain render-only and plan geometry is untouched. */
+  async setUndergroundInspection(on: boolean): Promise<void> {
+    if (on && !this.undergroundTools) this.undergroundTools = await import("../underground-inspection.ts");
+    if (on === this.undergroundInspection) return;
+    this.undergroundInspection = on;
+    if (this.building) this.rebuild();
     this.invalidate();
   }
 
@@ -3298,7 +3310,9 @@ export class FloorplanViewer {
             return y === null ? null : y - floor.elevation;
           }
         : undefined;
-      const geo = this.dual(() => buildFloorGeometry(withVehicles(floor, this.parked), b.settings.wall_exterior, b.settings.wall_interior, stairHoleParts(b.floors, floor), garden, roofUnder, floor.id === groundId ? around : null, roofRise));
+      const floorHoles = stairHoleParts(b.floors, floor);
+      if (this.undergroundInspection) floorHoles.push(...(this.undergroundTools?.floorCutouts(floor) ?? []));
+      const geo = this.dual(() => buildFloorGeometry(withVehicles(floor, this.parked), b.settings.wall_exterior, b.settings.wall_interior, floorHoles, garden, roofUnder, floor.id === groundId ? around : null, roofRise, this.undergroundInspection));
       const mask: FoldMasks = { standing: { value: 0xffff }, glass: { value: 0 } };
       const materials = this.makeMaterials(mask);
       const group = new Group();
@@ -5924,9 +5938,13 @@ export class FloorplanViewer {
       for (const f of fv.floor.furniture) {
         const item = packItem(f.type);
         if (!item || !hasLiveParts(item)) continue;
+        if (item.group === "underground_water_storage" && !this.undergroundInspection) continue;
         for (const [key, g] of liveGroups(item.parts)) {
           const ent = slotEntity(f.binds, g.bind.slot, item.slots?.length ?? 0, own(f.id), item.slots?.find((sl) => sl.id === g.bind.slot)?.domains);
-          values.set(`${f.id}|${key}`, ent ? bindValue(g.bind.kind, states[ent]) : NaN);
+          if (g.bind.kind === "level" && this.undergroundTools?.isUndergroundTank(f)) {
+            const reading = this.undergroundTools.readTankWater(f, states);
+            values.set(`${f.id}|${key}`, reading?.fraction ?? NaN);
+          } else values.set(`${f.id}|${key}`, ent ? bindValue(g.bind.kind, states[ent]) : NaN);
         }
       }
     }
@@ -5942,6 +5960,13 @@ export class FloorplanViewer {
       for (const f of fv.floor.furniture) {
         const item = packItem(f.type);
         if (!item || !hasLiveParts(item)) continue;
+        if (item.group === "underground_water_storage" && !this.undergroundInspection) {
+          for (const key of liveGroups(item.parts).keys()) {
+            const hidden = this.packLive.get(`${f.id}|${key}`);
+            if (hidden) hidden.group.visible = false;
+          }
+          continue;
+        }
         const base = mountBase(fv.floor, f);
         for (const key of liveGroups(item.parts).keys()) {
           const id = `${f.id}|${key}`;
@@ -5978,11 +6003,12 @@ export class FloorplanViewer {
             group.position.set(f.x, base, f.z);
             group.rotation.y = -(f.rotation * DEG);
             if (f.mirror) group.scale.x = -1;
-            live = { group, inner, mesh, edges, mat, bind: made.bind, depth: made.depth, rest: made.rest, floorId: fv.floor.id, y: base + made.pivot[1], sig, target: NaN, value: NaN };
+            live = { group, inner, mesh, edges, mat, bind: made.bind, depth: made.depth, rest: made.rest, floorId: fv.floor.id, y: base + made.pivot[1], sig, target: NaN, value: NaN, underground: item.group === "underground_water_storage" };
             this.packLive.set(id, live);
             this.poseLive(live, 0);
           }
           live.target = this.liveValues.get(id) ?? NaN;
+          if (item.group === "underground_water_storage") live.group.visible = this.undergroundInspection && Number.isFinite(live.target);
         }
       }
     }
@@ -5998,7 +6024,7 @@ export class FloorplanViewer {
   }
 
   /** A live part at its value: turned open, slid out, filled, tinted. */
-  private poseLive(l: { inner: Group; mesh: Mesh; mat: MeshBasicMaterial | null; bind: PartBind; depth: number; rest: number; value: number }, now: number): void {
+  private poseLive(l: { inner: Group; mesh: Mesh; mat: MeshBasicMaterial | null; bind: PartBind; depth: number; rest: number; value: number; underground?: boolean }, now: number): void {
     const b = l.bind;
     // no entity linked: the part as the item was drawn before (closed, full, in its own colour)
     if (Number.isNaN(l.value)) {
@@ -6023,7 +6049,7 @@ export class FloorplanViewer {
         l.mesh.position.z = Math.max(0, v) * (b.amount ?? 0.45) * l.depth;
         break;
       case "level":
-        l.mesh.scale.y = Math.max(0.02, Math.min(1, v));
+        l.mesh.scale.y = l.underground ? Math.max(0, Math.min(1, v)) : Math.max(0.02, Math.min(1, v));
         break;
       case "blink": {
         // fine: green; off: a dim grey; a fault: red, pulsing
@@ -6051,7 +6077,9 @@ export class FloorplanViewer {
       const fv = this.floorMap.get(l.floorId);
       if (!fv) continue;
       if (l.group.parent !== fv.group) fv.group.add(l.group);
-      l.group.visible = !(this.wallMode === "cut" && l.y > Math.min(fv.floor.cut_height, fv.floor.height));
+      l.group.visible = l.underground
+        ? this.undergroundInspection && Number.isFinite(l.target)
+        : !(this.wallMode === "cut" && l.y > Math.min(fv.floor.cut_height, fv.floor.height));
       if (l.bind.kind === "spin") {
         if (l.target > 0) {
           moving = true;

@@ -81,6 +81,13 @@ try {
       { id: "rectangular-mount-3.35m", item: item.id, view: "iso", level: "none", mount: 3.35 },
       { id: "rectangular-mount-6.71m", item: item.id, view: "iso", level: "none", mount: 6.71 },
     ];
+    if (item.id === "underground_concrete_water_tank") return [
+      { id: "underground-concrete-iso", item: item.id, view: "iso", level: "none", mount: -2 },
+      ...[0, 25, 50, 75, 100].map((level) => ({ id: `underground-concrete-level-${String(level).padStart(3, "0")}`, item: item.id, view: "iso", level: String(level), mount: -2 })),
+      { id: "underground-concrete-level-unknown", item: item.id, view: "iso", level: "unknown", mount: -2 },
+      { id: "underground-concrete-resized", item: item.id, view: "iso", level: "50", w: 3.6, d: 2.4, h: 2.3, mount: -2.3 },
+      { id: "underground-concrete-rotation-90", item: item.id, view: "iso", level: "50", rotation: 90, mount: -2 },
+    ];
     return [];
   });
   for (const scenario of scenarios) {

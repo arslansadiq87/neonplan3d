@@ -226,6 +226,8 @@ export function buildFloorGeometry(
    * top). The roof above still cuts it (#1156).
    */
   roofRise?: (x: number, z: number, top: number) => number | null,
+  /** Draw below-ground tank models and cut matching visual apertures in this floor while inspection is enabled. */
+  undergroundInspection = false,
 ): FloorGeometry {
   const { walls, open: openRooms } = generateWalls(floor.rooms, { exterior: wallExterior, interior: wallInterior }, floor.walls ?? []);
   // the top of a wall at a point: its own height (a sloping wall's at that point; under a dormer up to where the
@@ -720,6 +722,8 @@ export function buildFloorGeometry(
   const infrastructureNetworkBuf=new GeoBuffer(),infrastructureCctvBuf=new GeoBuffer();
   const infrastructureNetworkTris:FloorGeometry["furnitureTris"]=[],infrastructureCctvTris:FloorGeometry["furnitureTris"]=[];
   for (const item of floor.furniture) {
+    if (packItem(item.type)?.group === "underground_water_storage" && !undergroundInspection) continue;
+    if (item.type.endsWith(":underground_concrete_water_tank") && !undergroundInspection) continue;
     if (isLamp(item.type)) continue;
     const isInfrastructure=item.type.startsWith("pack:studio.techpanda.cctv_network:");
     const isCctv=/:(analog_bullet_camera|ip_bullet_camera|wifi_camera|dome_camera|ptz_camera)$/.test(item.type);

@@ -284,6 +284,7 @@ export class Fp3dView3d extends LitElement {
     explode: { type: Boolean },
     keepRoof: { attribute: false },
     solarVisibility: { attribute: false },
+    undergroundTanksVisible: { attribute: false },
     cameraCoverageVisible: { attribute: false },
     wifiCoverageVisible: { attribute: false },
     infrastructureConnectionsVisible: { attribute: false },
@@ -441,6 +442,7 @@ export class Fp3dView3d extends LitElement {
   declare keepRoof: boolean;
   /** Property View only: whether native solar fields are shown. */
   declare solarVisibility: boolean;
+  declare undergroundTanksVisible: boolean;
   declare cameraCoverageVisible: boolean;
   declare wifiCoverageVisible: boolean;
   declare infrastructureConnectionsVisible: boolean;
@@ -816,6 +818,7 @@ export class Fp3dView3d extends LitElement {
     this.explode = true;
     this.keepRoof = false;
     this.solarVisibility = true;
+    this.undergroundTanksVisible = false;
     this.cameraCoverageVisible = false;
     this.wifiCoverageVisible = false;
     this.infrastructureConnectionsVisible = false;
@@ -1270,6 +1273,7 @@ export class Fp3dView3d extends LitElement {
     if (changed.has("clean") || changed.has("_narrowStage")) this.scheduleThumbs();
     if (changed.has("floorId")) v.setFloor(this.floorId);
     if (changed.has("floorId") || changed.has("solarVisibility") || changed.has("building")) v.setSolarVisibility(this.floorId === null && (this.building?.floors.length ?? 0) > 1 ? this.solarVisibility : true);
+    if (changed.has("undergroundTanksVisible")) void v.setUndergroundInspection(this.undergroundTanksVisible).then(() => this.syncDevices(true));
     if (changed.has("cameraCoverageVisible")) v.setCameraCoverageVisible(this.cameraCoverageVisible);
     if (changed.has("infrastructureLabelsVisible") || changed.has("infrastructureIpLabelsVisible")) v.setInfrastructureLabels(this.infrastructureLabelsVisible,this.infrastructureIpLabelsVisible);
     if(changed.has("infrastructureRoutes")||changed.has("infrastructureWifi")||changed.has("infrastructureConnectionsVisible")||changed.has("wifiCoverageVisible"))this.setInfrastructureOverlayVisibility(this.wifiCoverageVisible,this.infrastructureConnectionsVisible);

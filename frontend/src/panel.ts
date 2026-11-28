@@ -21,6 +21,7 @@ import { siteOwner } from "./site.ts";
 import { OtherPlans } from "./plan-watch.ts";
 import "./components/room-bar.ts";
 import "./components/room-panel.ts";
+import "./components/underground-tank-settings.ts";
 import "./components/view3d.ts";
 import { formatPower } from "./components/view3d.ts";
 import { languageReady, loadLanguage, translate, type I18nKey } from "./i18n.ts";
@@ -35,7 +36,7 @@ import { keepInRoom, snapToWall } from "./geometry/snap.ts";
 import { furnitureName } from "./furniture-names.ts";
 import { confirmEntities, defaultHeight, entityName, kindOf } from "./devices.ts";
 import { canLift, zonesOf, type LampMount } from "./model.ts";
-import { mountBase, packsVersion } from "./packs.ts";
+import { mountBase, packsVersion, UNDERGROUND_TANK_TYPE } from "./packs.ts";
 import { hasFeature, labOn, registerUrl, released, UNRELEASED } from "./features.ts";
 import { mountLocateLab } from "./locate-lab.ts";
 import { directorOnHere } from "./director.ts";
@@ -94,6 +95,7 @@ export class Floorplan3dPanel extends LitElement {
     _explode: { state: true },
     _keepRoof: { state: true },
     _solarPanels: { state: true },
+    _undergroundTanks: { state: true },
     _cameraCoverage: { state: true },
     _wifiCoverage: { state: true },
     _networkConnections: { state: true },
@@ -185,6 +187,7 @@ export class Floorplan3dPanel extends LitElement {
   private declare _explode: boolean;
   private declare _keepRoof: boolean;
   private declare _solarPanels: boolean;
+  private declare _undergroundTanks: boolean;
   private declare _cameraCoverage: boolean;
   private declare _wifiCoverage: boolean;
   private declare _networkConnections: boolean;
@@ -291,6 +294,7 @@ export class Floorplan3dPanel extends LitElement {
     this._explode = prefs.get("explode") !== "0";
     this._keepRoof = prefs.get("roof") === "1";
     this._solarPanels = prefs.get("solar_panels") !== "0";
+    this._undergroundTanks = prefs.get("underground_tanks") === "1";
     this._cameraCoverage = prefs.get("camera_coverage") === "1";
     this._wifiCoverage = prefs.get("infra_wifi") === "1";
     this._networkConnections = prefs.get("infra_connections") === "1";
@@ -652,11 +656,11 @@ export class Floorplan3dPanel extends LitElement {
               type=${imperial ? "text" : "number"}
               inputmode="decimal"
               step="0.05"
-              min="0"
+              min="-5"
               .value=${show(f.mount_y ?? mountBase(floor, f))}
               @change=${(e: Event) => {
                 const v = read((e.target as HTMLInputElement).value) ?? NaN;
-                if (Number.isFinite(v) && v >= 0) this.editFurniture(id, (m) => (m.mount_y = Math.round(v * 1000) / 1000));
+                if (Number.isFinite(v) && v >= -5 && v <= 10) this.editFurniture(id, (m) => (m.mount_y = Math.round(v * 1000) / 1000));
               }}
           /></label>
           ${f.mount_y != null ? html`<button class="fp3d-chip" @click=${() => this.editFurniture(id, (m) => (m.mount_y = null))}>${this.t("height_auto")}</button>` : nothing}`
@@ -1473,6 +1477,7 @@ export class Floorplan3dPanel extends LitElement {
           .explode=${this._explode}
           .keepRoof=${this._keepRoof}
           .solarVisibility=${this._floorId === null ? this._solarPanels : true}
+          .undergroundTanksVisible=${this._undergroundTanks}
           .cameraCoverageVisible=${this._cameraCoverage}
           .cctvEquipmentVisible=${this._cctvEquipment}
           .networkEquipmentVisible=${this._networkEquipment}
@@ -1607,6 +1612,14 @@ export class Floorplan3dPanel extends LitElement {
           <button class="fp3d-chip" aria-pressed=${this._deviceLabels} @click=${() => {this._deviceLabels=!this._deviceLabels;prefs.set("infra_labels",this._deviceLabels?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {infrastructureLabelsVisible?:boolean}|null;if(v)v.infrastructureLabelsVisible=this._deviceLabels;}}>Device labels</button>
           <button class="fp3d-chip" aria-pressed=${this._ipLabels} @click=${() => {this._ipLabels=!this._ipLabels;prefs.set("infra_ip_labels",this._ipLabels?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {infrastructureIpLabelsVisible?:boolean}|null;if(v)v.infrastructureIpLabelsVisible=this._ipLabels;}}>IP labels</button>
           <button class="fp3d-chip" aria-pressed=${this._wifiCoverage} @click=${() => {this._wifiCoverage=!this._wifiCoverage;prefs.set("infra_wifi",this._wifiCoverage?"1":"0");const v=this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & {wifiCoverageVisible?:boolean}|null;if(v)v.wifiCoverageVisible=this._wifiCoverage;}}>Estimated Wi-Fi</button>
+          ${b.floors.some((floor) => floor.furniture.some((f) => f.type === UNDERGROUND_TANK_TYPE))
+            ? html`<button class="fp3d-chip" aria-pressed=${this._undergroundTanks} title="Show below-ground tanks and a temporary floor cutaway for inspection" @click=${() => {
+                this._undergroundTanks = !this._undergroundTanks;
+                prefs.set("underground_tanks", this._undergroundTanks ? "1" : "0");
+                const v = this.renderRoot.querySelector("fp3d-view3d") as HTMLElement & { undergroundTanksVisible?: boolean } | null;
+                if (v) v.undergroundTanksVisible = this._undergroundTanks;
+              }}>Underground tanks</button>`
+            : nothing}
           ${!this._floorId && b.settings.roof.type !== "none"
             ? html`<div class="fp3d-seg">
                 <button aria-pressed=${this._keepRoof} title=${this.t("roof_keep_hint")} @click=${() => this.setKeepRoof(!this._keepRoof)}>${this.t("roof_keep")}</button>

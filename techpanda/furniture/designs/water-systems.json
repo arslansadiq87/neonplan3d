@@ -1,8 +1,8 @@
 {
-  "status": "water systems pack release 3",
+  "status": "water systems pack release 4",
   "source": "techpanda/furniture/packs/water-tanks.source.json",
   "pack_id": "studio.techpanda.water_tanks",
-  "release": 3,
+  "release": 4,
   "items": [
     {
       "item_id": "rectangular_water_tank",
@@ -51,6 +51,15 @@
       ],
       "mount": "floor",
       "slots": []
+    },
+    {
+      "item_id": "underground_concrete_water_tank",
+      "name": "Underground Concrete Water Tank",
+      "default_size_m": [3.0, 2.0, 2.0],
+      "mount": "floor",
+      "level_entity_slot": "level",
+      "geometry": ["reinforced concrete base and four walls", "segmented top slab with inspection hatch", "inlet, outlet and overflow stubs", "native level-bound internal water volume"],
+      "ground_floor_placement": "assign to Ground Floor and set mounting height to -2 m for a 2 m tank ending at ground level"
     }
   ],
   "water_level": {
@@ -62,8 +71,8 @@
       75,
       100
     ],
-    "unknown_fallback": "NeonPlan native level-binding zero fallback; unbound geometry remains in its native rest pose"
+    "unknown_fallback": "NeonPlan native level-binding zero fallback; a valid percentage sensor is recommended"
   },
-  "runtime_changes": false,
-  "signed_artifact": "techpanda/furniture/dist/techpanda-water-tanks-v3.fp3dpack"
+  "runtime_changes": true,
+  "signed_artifact": "techpanda/furniture/dist/techpanda-water-tanks-v4.fp3dpack"
 }

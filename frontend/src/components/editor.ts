@@ -177,7 +177,7 @@ import { packsVersion as libPacksVersion } from "../packs.ts";
 import type { WallMode } from "../viewer/viewer3d.ts";
 import { furnitureName } from "../furniture-names.ts";
 import { furnitureShown } from "../show-if.ts";
-import { furnitureSize, isElectric, isPackHeater, isPackSensor, isPackType, isRobotVacuum, mountBase, packDisplay, packItem, packItemName, packMotion, packName, packSpinAxis, packType, setPacks, type FurniturePack } from "../packs.ts";
+import { furnitureSize, isElectric, isPackHeater, isPackSensor, isPackType, isRobotVacuum, mountBase, packDisplay, packItem, packItemName, packMotion, packName, packSpinAxis, packType, setPacks, UNDERGROUND_TANK_TYPE, type FurniturePack } from "../packs.ts";
 
 /** Items that can be fixed against moving. */
 type FixKind = "room" | "opening" | "furniture" | "device" | "wall" | "outdoor";
@@ -12088,6 +12088,13 @@ export class Fp3dEditor extends LitElement {
     </details>`;
   }
 
+  /** Measurement interpretation and readout for the TechPanda underground concrete tank. */
+  private renderUndergroundTankInfo(f: Furniture) {
+    if (f.type !== UNDERGROUND_TANK_TYPE) return nothing;
+    return html`<fp3d-underground-tank-settings .furniture=${f} .hass=${this.hass} .admin=${this.isAdmin}
+      @tank-settings=${(e: Event) => this.updateFurniture({ mods: (e as CustomEvent).detail })}></fp3d-underground-tank-settings>`;
+  }
+
   private renderFurnitureForm(f: Furniture) {
     if (this.selection().length > 1) return this.renderBlockForm();
     const admin = this.isAdmin;
@@ -12136,7 +12143,10 @@ export class Fp3dEditor extends LitElement {
         ${this.len(this.t("x"), f.x, (v) => this.updateFurniture({ x: v }))} ${this.len(this.t("z"), f.z, (v) => this.updateFurniture({ z: v }))}
         ${this.len(this.t(f.type === "led_strip" ? "strip_length" : "width"), f.w, (v) => this.updateFurniture({ w: Math.max(0.01, v) }), 0.01, 0.01)}
         ${this.len(this.t("depth"), f.d, (v) => this.updateFurniture({ d: Math.max(0.01, v) }), 0.01, 0.01)}
-        ${this.len(this.t(f.type === "led_strip" ? "strip_thickness" : "height_m"), f.h, (v) => this.updateFurniture({ h: Math.max(0.005, v) }), 0.01, 0)}
+        ${this.len(this.t(f.type === "led_strip" ? "strip_thickness" : "height_m"), f.h, (v) => {
+          const h = Math.max(0.005, v);
+          this.updateFurniture({ h, ...(f.type === UNDERGROUND_TANK_TYPE ? { mount_y: (f.mount_y ?? 0) + f.h - h } : {}) });
+        }, 0.01, 0)}
         ${this.num(this.t("rotation"), f.rotation, (v) => this.updateFurniture({ rotation: ((v % 360) + 360) % 360 }), 1)}
         ${isLamp(f.type)
           ? nothing
@@ -12157,8 +12167,10 @@ export class Fp3dEditor extends LitElement {
               ${this.minMountY(f) < 0 && (f.mount_y ?? 0) < 0 ? html`<p class="fp3d-sub fp3d-wide">${this.t("mount_below_hint")}</p>` : nothing}
               ${f.mount_y != null ? html`<button class="fp3d-btn fp3d-field-btn" ?disabled=${!admin} @click=${() => this.updateFurniture({ mount_y: null })}>${this.t("height_auto")}</button>` : nothing}`
           : nothing}
+        ${f.type === UNDERGROUND_TANK_TYPE ? html`<button class="fp3d-btn fp3d-field-btn" ?disabled=${!admin} @click=${() => this.updateFurniture({ mount_y: -f.h })}>Set tank top at floor level</button>` : nothing}
       </div>
       ${this.renderFinish(f)} ${this.renderLiveSlots(f)}
+      ${this.renderUndergroundTankInfo(f)}
       ${f.type === "stairs" ? html`<p class="fp3d-sub">${this.t("stairs_hint")}</p>` : nothing}
       ${f.type === "stairs_u" ? html`<p class="fp3d-sub">${this.t("stairs_u_hint")}</p>` : nothing}
       ${f.type === "stairwell"
