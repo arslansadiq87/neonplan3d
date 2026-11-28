@@ -11,6 +11,7 @@ import { GeoBuffer, LineBuffer } from "../../frontend/src/viewer/geo.ts";
 import { pushFurniture, pushPackLive } from "../../frontend/src/viewer/furniture.ts";
 import { floorCutouts, readTankWater } from "../../frontend/src/underground-inspection.ts";
 import { buildFloorGeometry } from "../../frontend/src/viewer/build.ts";
+import { UNDERGROUND_TANK_RENDER_STYLE } from "../../frontend/src/underground-rendering.ts";
 
 const source = JSON.parse(readFileSync(new URL("./packs/water-tanks.source.json", import.meta.url), "utf8"));
 const pack = { id: source.id, name: source.name, items: source.items };
@@ -146,6 +147,45 @@ test("an underground pack tank with no saved elevation defaults below its assign
   assert.ok(geo.undergroundTankLines.getAttribute("position").count >= 24, "the rotated footprint has cyan outline geometry");
   assert.equal(geo.furnitureTris.some((part) => part.id === tank.id), false, "separate tank geometry is not indexed in the wall mesh");
   assert.equal(readTankWater(tank, {}), null, "an unbound tank has no fabricated water reading");
+});
+
+test("two underground tanks keep unique bodies, physical elevations, independent bindings and one subtle depth-tested outline", () => {
+  setPacks([pack]);
+  const ground = newFloor("ground", "Ground Floor", 0);
+  const make = (id: string, x: number, rotation: number, entity: string): Furniture => ({
+    id, type: packType(pack.id, underground.id), x, z: 15.9, rotation, w: 7.7724, d: 2.1336, h: 2,
+    mount_y: -2, variant: null, binds: { level: entity },
+    mods: { [pack.id]: { waterMode: "percent", maxCapacityL: id === "tank-a" ? 10_000 : 12_000 } },
+  } as Furniture);
+  const tanks = [make("tank-a", 4.075, 90, "sensor.tank_a"), make("tank-b", 32.6, 270, "sensor.tank_b")];
+  ground.furniture = tanks;
+  const holes = floorCutouts(ground);
+  assert.equal(holes.length, 2, "each rotated tank gets its own localized footprint");
+  assert.notDeepEqual(holes[0], holes[1]);
+  const geo = buildFloorGeometry(ground, 0.24, 0.12, holes, [], undefined, null, undefined, true);
+  assert.deepEqual(geo.undergroundTankTris.map((range) => range.id), ["tank-a", "tank-b"]);
+  assert.equal(new Set(geo.undergroundTankTris.map((range) => range.id)).size, 2, "one body range per placed tank");
+  assert.equal(geo.furnitureTris.filter((range) => tanks.some((tank) => tank.id === range.id)).length, 0, "no duplicate native wall-mesh representation");
+  assert.equal(geo.undergroundTankLines.getAttribute("position").count, 48, "one 12-segment silhouette per tank, without internal pack-edge duplication");
+  const color = geo.undergroundTankLines.getAttribute("color");
+  assert.ok(color.getX(0) < 0.2 && color.getY(0) < 0.3 && color.getZ(0) < 0.4, "the structural outline uses the subdued slate-blue palette");
+  assert.equal(UNDERGROUND_TANK_RENDER_STYLE.body.depthTest, true);
+  assert.equal(UNDERGROUND_TANK_RENDER_STYLE.body.depthWrite, false, "translucent concrete does not erase later depth data");
+  assert.equal(UNDERGROUND_TANK_RENDER_STYLE.outline.depthTest, true);
+  assert.equal(UNDERGROUND_TANK_RENDER_STYLE.outline.depthWrite, false);
+  assert.equal(UNDERGROUND_TANK_RENDER_STYLE.selectedOutlineDepthTest, true);
+  for (const range of geo.undergroundTankTris) {
+    const ys = [];
+    for (let i = range.start * 3; i < range.end * 3; i++) ys.push(geo.undergroundTanks.getAttribute("position").getY(i));
+    assert.ok(Math.abs(Math.min(...ys) + 2) < 1e-5);
+    assert.ok(Math.abs(Math.max(...ys)) < 1e-5, "floor elevation is not repeated in local geometry");
+  }
+  assert.deepEqual(tanks.map((tank) => tank.binds?.level), ["sensor.tank_a", "sensor.tank_b"]);
+  assert.deepEqual(tanks.map((tank) => tank.mods?.[pack.id]?.maxCapacityL), [10_000, 12_000]);
+  const restored = JSON.parse(JSON.stringify({ floors: [ground] }));
+  assert.deepEqual(restored.floors[0].furniture.map((tank: Furniture) => tank.id), ["tank-a", "tank-b"]);
+  const hidden = buildFloorGeometry(ground, 0.24, 0.12, [], [], undefined, null, undefined, false);
+  assert.equal(hidden.undergroundTankTris.length, 0, "inspection off restores the uncut floor and hides tank meshes");
 });
 
 test("underground tank cutouts follow rotated negative-height tanks and ignore surface tanks", () => {

@@ -15,6 +15,7 @@ import { buildEarth } from "./earth.ts";
 import { clampIntoRoom } from "../geometry/snap.ts";
 import { activeSections, dormerRise, roofRider, roofUnderAt, sectionAbove, sectionCutsBelow } from "../roof-sections.ts";
 import { buildFloorGeometry, SLAB, stairHoleParts, type FloorGeometry } from "./build.ts";
+import { UNDERGROUND_TANK_RENDER_STYLE } from "../underground-rendering.ts";
 import { OrbitControls, type OrbitView } from "./controls.ts";
 import { makeFoldable, type FoldMasks } from "./fold.ts";
 import { CameraProjections, PROJECTION_LAYER, type ProjectionSurface, type ProjectorPose } from "./projection.ts";
@@ -3256,8 +3257,8 @@ export class FloorplanViewer {
       ),
       blinds: themed(makeFoldable(new MeshBasicMaterial({ map: this.blindTexture, vertexColors: true, side: DoubleSide }), mask), this.themeUniform),
       water: themed(new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false, side: DoubleSide, forceSinglePass: true }), this.themeUniform),
-      undergroundTank: themed(new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.58, depthWrite: false, side: DoubleSide, forceSinglePass: true }), this.themeUniform),
-      undergroundTankLines: new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false, depthTest: false }),
+      undergroundTank: themed(new MeshBasicMaterial({ vertexColors: true, transparent: true, ...UNDERGROUND_TANK_RENDER_STYLE.body, side: DoubleSide, forceSinglePass: true }), this.themeUniform),
+      undergroundTankLines: new LineBasicMaterial({ vertexColors: true, transparent: true, opacity: UNDERGROUND_TANK_RENDER_STYLE.outline.opacity, depthWrite: UNDERGROUND_TANK_RENDER_STYLE.outline.depthWrite, depthTest: UNDERGROUND_TANK_RENDER_STYLE.outline.depthTest }),
       flow: flowMaterial(this.flowTime),
       pipeLine: pipeLineMaterial(this.flowTime),
       // a module's surfaces: colour and opacity per vertex, over the floor without hiding what stands on it
@@ -5382,6 +5383,10 @@ export class FloorplanViewer {
   private furnitureAt(x: number, y: number): { fv: FloorView; id: string; y: number } | null {
     const ray = this.rayAt(x, y);
     const floors = this.activeFloors();
+    const tankOccluders = [
+      ...floors.map((f) => f.floorMesh),
+      ...(this.roof?.group.visible ? [this.roof.group] : []),
+    ];
     // a TV's screen and its picture, a smart fridge's doors are meshes of their own: they belong to the item too
     const extra = (f: FloorView) => [f.screenMesh, f.fridgeMesh, ...[...f.screenPics.values()].map((p) => p.mesh)];
     const meshes = floors.flatMap((f) => [f.lampMesh, f.wallMesh, f.undergroundTankMesh, f.cctvMesh, f.networkMesh, ...extra(f)].filter((m) => m.visible));
@@ -5391,6 +5396,9 @@ export class FloorplanViewer {
       if (!fv) continue;
       if(hit.object===fv.cctvMesh||hit.object===fv.networkMesh){const list=hit.object===fv.cctvMesh?fv.geo.infrastructureCctvTris:fv.geo.infrastructureNetworkTris;const id=list.find(r=>hit.faceIndex!>=r.start&&hit.faceIndex!<r.end)?.id;if(id)return{fv,id,y:hit.point.y};continue;}
       if (hit.object === fv.undergroundTankMesh) {
+        // Floor surfaces and the roof are not selectable furniture meshes, but they still block a tank pick.
+        // The associated floor's inspection cutout naturally leaves no hit where that tank is exposed.
+        if (ray.intersectObjects(tankOccluders, true).some((blocker) => blocker.distance + 0.005 < hit.distance)) continue;
         const id = fv.geo.undergroundTankTris.find((r) => hit.faceIndex! >= r.start && hit.faceIndex! < r.end)?.id;
         if (id) return { fv, id, y: hit.point.y };
         continue;
@@ -5644,16 +5652,18 @@ export class FloorplanViewer {
     const ids = [...new Set([...(this.selectedFurniture ? [this.selectedFurniture] : []), ...this.selectedSet])];
     const lines = new LineBuffer();
     let at: FloorView | undefined;
+    let occludeSelection = false;
     for (const id of ids) {
       const fv = this.floors.find((q) => q.floor.furniture.some((m) => m.id === id));
       const f = fv?.floor.furniture.find((m) => m.id === id);
       if (!fv || !f) continue;
       if (!furnitureSelectionGhost(f.type)) continue;
+      if (packItem(f.type)?.group === "underground_water_storage") occludeSelection = UNDERGROUND_TANK_RENDER_STYLE.selectedOutlineDepthTest;
       at ??= fv;
       this.ghostBox(lines, fv, f, id === this.selectedFurniture ? new Color(0.25, 0.9, 1) : new Color(1, 0.71, 0.28));
     }
     if (!at) return;
-    this.ghost = new LineSegments(lines.geometry(), new LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true }));
+    this.ghost = new LineSegments(lines.geometry(), new LineBasicMaterial({ vertexColors: true, depthTest: occludeSelection, transparent: true }));
     this.ghost.position.y = at.floor.elevation + at.y;
     this.ghost.renderOrder = 20;
     this.scene.add(this.ghost);

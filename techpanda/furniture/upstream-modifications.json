@@ -1,584 +1,812 @@
-{
-  "upstream": "Mastershort/neonplan3d",
-  "baseline_tag": "v4.0.2",
-  "baseline_commit": "503bcb368ba06cd8e31e2df6da1a1000158cf275",
-  "custom_upstream_file_changes": [
-    {
-      "path": "frontend/src/components/editor.ts",
-      "change": "Add native selected-furniture infrastructure configuration forms stored through the editor's undoable Building.mods extension data; context-sensitive recorder, camera, router/AP and switch settings with existing HA entity pickers and channel duplicate protection.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/build.mjs",
-      "change": "Build and fingerprint a separately lazy-loaded infrastructure manager entry bundle with an independent size budget; include it in watch and production builds.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/infrastructure-manager.ts",
-      "change": "Add the downstream, separately bundled infrastructure manager UI for inventory, camera configuration, recorder capacity/channel assignments, network interfaces, switch port assignments, IP inventory/CSV, logical topology, connections and validation; persist through Building.mods and editor events.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/load-infrastructure.ts",
-      "change": "Load the infrastructure manager by a cache-busted dynamic import only when requested.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add an Infrastructure Manager Extensions entry and lazy-loaded manager route with equipment locate return path.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/editor.ts",
-      "change": "Add a compact selected-infrastructure action to open the lazy manager and accept manager edits through the editor undo history.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-infrastructure.js",
-      "change": "Generated lazy manager bundle, separate from the editor and main bundles.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "frontend/src/modules.ts",
-      "change": "Extend the approved executable module field contract with a plain text input field for hostnames, addresses and metadata; the furniture-only signing restriction is unchanged.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/model.ts",
-      "change": "Add optional Building.mods data, reusing the existing module namespace for backward-compatible plan persistence and standard export/import.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/editor.ts",
-      "change": "Add the native context-sensitive infrastructure furniture form and undoable metadata mutations; delete/duplicate operations maintain connected infrastructure references.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/editor.ts",
-      "change": "Add camera horizontal/vertical FOV, full-circle azimuth, coverage color/opacity and optional ground projection controls; keep selected camera elevation synchronized with its furniture geometry and carry azimuth through furniture rotation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Merge infrastructure camera furniture metadata with bound native camera markers and carry the furniture lens pose/FOV into the native stream marker without creating duplicate camera markers.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Render a per-floor translucent 3D CCTV frustum and optional native ground projection from the camera lens pose; persistent Show-menu visibility is separate from spotlight cone visibility and follows floor Apart/Stacked transforms.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add persistent Camera field of view control to the Show menu, disabled by default.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/infrastructure.ts",
-      "change": "Extend optional camera metadata with color, opacity and ground projection settings and calculate camera furniture lens poses from depth, height, azimuth and floor elevation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/modules.ts",
-      "change": "Add a plain-text field to the approved module editor API for separately approved executable extensions.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/model.ts",
-      "change": "Add optional Building.mods extension metadata for compatible save/export/import.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
-      "change": "Regenerated editor bundle for optional infrastructure configuration forms; passed existing size budget.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/infrastructure.ts",
-      "change": "Add isolated optional infrastructure inventory types and pure validation/summary helpers for IP, MAC, network-scoped duplicate warnings and estimated camera coverage; stored in the approved module namespace.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/infrastructure.test.ts",
-      "change": "Regression coverage for address validation, network-scoped duplicate detection, missing connection references and bounded estimated camera coverage.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "techpanda/furniture/packs/cctv-network.source.json",
-      "change": "Furniture-only source for CCTV/network equipment. Sign with the existing restricted TechPanda key; this authorizes no executable module code.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/packs/cctv-network.source.json"
-    },
-    {
-      "path": "techpanda/furniture/cctv-network.module.js",
-      "change": "Optional downstream inventory UI source using the separately approved NeonPlan module workflow; it is not embedded in or authorized by the furniture-only pack.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/cctv-network.module.js"
-    },
-    {
-      "path": ".gitignore",
-      "change": "Ignore local integration backups and generated furniture pack/preview output so secrets and local artifacts are not staged accidentally. No upstream runtime behavior changes.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/packs.py",
-      "change": "Add TechPanda Ed25519 public key 4d62b4e84557 to PACK_PUBLIC_KEYS and the same id to STUDIO_KEYS, restricting it to studio.* furniture-only packs with no Pro features or executable module.",
-      "official_keys_preserved": [
-        "62863e45df5a",
-        "867371cc70e6",
-        "bdac241ae58b"
-      ],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/manifest.json",
-      "change": "Set the downstream HACS version from techpanda/release.json (currently 4.0.2.4b3, based on upstream 4.0.2); update this value for each reviewed downstream prerelease or stable release.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated to report downstream version 4.0.2.2 and load the TechPanda solar visibility implementation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
-      "change": "Regenerated for downstream version 4.0.2.2 and matching frontend asset fingerprints.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add a default-enabled Solar Panels control to the existing Show menu in multi-floor Property View and persist the device preference through the existing prefs store.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Forward the Property View solar preference to the viewer while forcing existing individual-floor behavior to remain enabled.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/i18n.ts",
-      "change": "Add German and English Solar Panels menu labels and hint text.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/build.ts",
-      "change": "Route existing garden and wall solar primitives into separate per-floor buffers rather than the merged walls/furniture buffers.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/roof.ts",
-      "change": "Route existing roof solar primitives into separate per-roof-part buffers using the native pushModules renderer.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Add independently hideable batched solar layers and route composed ground-face arrays to their source plan floor; preserve native live overlays and keep solar placement independent of roof lift/fade.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/build.test.ts",
-      "change": "Assert floor-mounted solar buffers remain separate from walls, furniture and shared line geometry.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/roof.test.ts",
-      "change": "Assert native roof solar geometry is separated from roof body triangles and edge lines.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/screenshot.mjs",
-      "change": "Add deterministic Property View solar enabled/disabled preview shots and a preference reload assertion; identify known optional preview-only missing-pack and favicon 404s without masking other browser errors.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
-      "change": "Regenerated native viewer bundle containing the independently toggleable solar geometry layers.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-card-editor.js",
-      "change": "Regenerated with synchronized frontend strings and downstream asset fingerprints.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "frontend/src/site.ts",
-      "change": "Compose secondary site-plan solar fields and strings into read-only Property View, transform their placement and references, and retain a runtime floor association for ground-face arrays.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/model.ts",
-      "change": "Add optional runtime-only siteFloorId metadata to SolarField for Property View floor routing; it is not persisted in plan storage.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/site.test.ts",
-      "change": "Cover secondary roof-field composition and live bindings, plus site-transformed ground-array position, rotation, elevation and native floor-geometry generation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Render the shared-Three infrastructure route overlay from data supplied by the lazy manager, expose equipment/label visibility controls, and split CCTV/network furniture geometry into independently visible and pickable batches.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/build.ts",
-      "change": "Batch CCTV furniture and network equipment into separate buffers so their visibility can be controlled independently while preserving item pick ranges.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/infrastructure.ts",
-      "change": "Estimate cable path lengths from actual floor elevations, produce route segments, recognize equipment item ids stored in signed furniture pack types, and validate switch port/PoE and recorder channel allocations. Bullet CCTV furniture coverage anchors now start at the redesigned analog/IP bullet lens plane; other camera models keep the existing pose rule.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Forward independent Wi-Fi and network-connection visibility preferences to the native viewer. Pass the furniture type into the camera pose helper for bullet lens alignment.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add persistent, default-off Show controls for estimated Wi-Fi and network connection geometry.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Suppress the generic selected-furniture wireframe ghost for only the TechPanda Wi-Fi router and access point pack item types; furniture selection, hit testing and editing remain active.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d-selection.test.ts",
-      "change": "Cover the targeted furniture selection ghost policy: router and access point are suppressed while other furniture types keep their wireframe.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/load-smart-rgb.ts",
-      "change": "Load the Smart RGB manager chunk on demand through a cache-busted dynamic import.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-config.ts",
-      "change": "Define versioned furniture.mods configuration, stable fixture IDs, explicitly assigned entity bindings and firmware zone mapping; new fixtures start unbound, saved explicit bindings and sparse/empty LED edge maps remain intact, and implicit wall mounting matches the native pack default.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/model.ts",
-      "change": "Classify Smart RGB pack fixtures as decorative self-illuminating devices, never conventional lamps, even if a legacy or malformed pack definition includes lamp metadata; ordinary lamp classification is unchanged.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Refresh native RGB furniture geometry and animation state when its bound Home Assistant light, sensor, pattern, brightness, speed or colour state changes; restore the saved plan configuration after asynchronous lazy-runtime loading and refresh native floor geometry after lazy renderer registration even when the plan key is unchanged.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/module-scene.ts",
-      "change": "Allow explicitly narrow module line widths so animated RGB flow ribbons can match physical LED strips instead of using the much wider energy-cable minimum.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Expose refreshFurniture() to rebuild the native viewer geometry for the current shown plan after an isolated lazy furniture renderer registers, bypassing same-plan-key update suppression without changing plan data.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-geometry.ts",
-      "change": "Generate bounded shared-edge hex and triangular panel/groove layout geometry.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-runtime.ts",
-      "change": "Render only configured RGB strip geometry through native viewer buffers. No entity binding means neutral charcoal and no animation; bound entities must report on with valid colour and nonzero brightness. Multizone edges require their own zone-on report or explicit active zone entity. Active effect ribbons use the native narrow, non-additive pipe layer rather than additive energy-cable halos, and remain aligned with physical strips. Smart RGB does not emit room lighting. The isolated lazy bundle keeps stable furniture-local transforms and does not rely on a duplicate main-bundle pack registry.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-services.ts",
-      "change": "Call existing Home Assistant entity services from the isolated Smart RGB manager; no direct browser-to-controller calls.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-manager.ts",
-      "change": "Add the lazy editor for fixture layouts, raised panels, assigned RGB edges, bindings, and HA service controls.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-entry.ts",
-      "change": "Register the Smart RGB runtime and manager in the independently lazy-loaded bundle.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/furniture.ts",
-      "change": "Allow the native furniture builder to consume the Smart RGB triangle geometry callback.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-config.test.ts",
-      "change": "Cover unbound defaults, retained explicit bindings, firmware zone mappings, sanitization, persistence across plan cloning, and saved sparse/empty edge maps.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-geometry.test.ts",
-      "change": "Cover connected-hex shared edges, triangular layout/grooves, and bounded geometry generation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-runtime.test.ts",
-      "change": "Cover strict unbound/off/unavailable/zero-brightness behavior, per-zone state and brightness, neutral geometry, pipe-only non-additive animation, exclusion from conventional room lighting, retained ordinary lamp behavior, exact strip alignment across transforms, and rendering when the lazy bundle has no shared pack registry.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/smart-rgb-services.test.ts",
-      "change": "Verify Home Assistant service routing and no-op behavior for unavailable/unconfigured entities.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-smart-rgb.js",
-      "change": "Generated isolated Smart RGB manager and viewer bundle (52.3 KB); package at integration frontend root and load on demand. Viewer geometry resolves without cross-bundle pack registry state. Explicit entity/state gating renders inactive fixtures charcoal; animated strips use the narrow non-additive pipe layer.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
-      "change": "Regenerated native viewer bundle for narrow Smart RGB pipe widths; keeps decorative RGB strips out of the additive energy-cable layer.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated for decorative Smart RGB fixtures to remain excluded from conventional room-light classification while normal lamps are unchanged.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Allow the existing furniture mounting-height control to accept the backend-supported -5 m lower bound for below-ground placement.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/building-controller.ts",
-      "change": "Clamp saved furniture mounting heights to the backend-supported -5 m to 10 m range.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated main frontend bundle for the existing furniture mounting control's below-ground range and bounded save normalization.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/build.mjs",
-      "change": "Split the viewer's lazy underground inspection module and shared chunk into packageable ESM files while retaining the established viewer bundle budget.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/underground-inspection.ts",
-      "change": "Provide lazy underground tank detection, rotated floor cutouts, calibrated percent/depth/volume measurement and read-only indicator values.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/underground-tank-settings.ts",
-      "change": "Show underground tank measurement configuration, internal geometry/capacity, remaining capacity and read-only status entities in the editor.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/editor.ts",
-      "change": "Expose underground tank settings for a selected tank and allow resizing while preserving its configured top elevation.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Pass the persisted underground inspection state into the viewer and rebuild live state on toggle changes.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/packs.ts",
-      "change": "Export the stable underground tank type and preserve normalized negative mount height through existing furniture support.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/build.ts",
-      "change": "Build temporary localized floor holes above underground tank footprints and suppress underground furniture geometry when inspection is off.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Lazy-load tank inspection helpers, rebuild floor cutouts, gate underground visuals and water on valid sensor readings, animate live level geometry until it reaches sensor targets, and preserve floor-local transforms.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add the persisted default-off Underground tanks Show-menu control and pass its preference to the production viewer.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
-      "change": "Regenerated viewer entry with the lazy underground inspection loader and dynamic chunk references.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/chunks/chunk-ZLS4GFIZ.js",
-      "change": "Generated shared viewer geometry dependency for the lazy underground inspection chunk.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/chunks/underground-inspection-NEBRJLE7.js",
-      "change": "Generated lazy underground inspection module for floor cutouts and water measurement.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
-      "change": "Generated editor bundle with tank measurement, capacity and read-only status configuration.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated main bundle with persisted underground inspection toggle and tank editor support.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/packs.ts",
-      "change": "Infer the existing underground tank pack items below-grade placement from their current dimensions only when mount_y is unset; preserve all explicit saved elevations.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/underground-inspection.ts",
-      "change": "Generate a render-only floor aperture for underground tanks whose saved elevation is negative or is unset and therefore uses the pack default.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/build.ts",
-      "change": "Build underground tank bodies and cyan boundary lines in separate per-floor geometry buffers during inspection so only the tank can use translucent materials and correct rotated footprints.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Render underground tank inspection geometry translucently, retain floor-local transforms and picking, and focus a selected tank from an elevated isometric camera.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/components/view3d.ts",
-      "change": "Expose the viewer focus action for an existing underground tank without changing plan data.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "frontend/src/panel.ts",
-      "change": "Add per-tank Focus Tank actions to the Show menu; enable the existing inspection preference, select the tank floor and focus the native viewer.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
-      "change": "Regenerated main bundle with the underground tank focus action and preference handling.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
-      "change": "Regenerated editor bundle after the shared view component gained the underground tank focus action.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
-      "change": "Regenerated viewer entry with translucent tank geometry, focus camera behavior and renamed lazy inspection chunk references.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/chunks/chunk-AXHOQEID.js",
-      "change": "Generated shared viewer geometry dependency for underground tank inspection rendering.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    },
-    {
-      "path": "custom_components/neonplan3d/frontend/chunks/underground-inspection-TZR76RO6.js",
-      "change": "Generated lazy inspection helper with implicit below-grade tank footprint support.",
-      "official_keys_preserved": [],
-      "source_of_truth": "techpanda/release.json"
-    }
-  ],
-  "custom_source_outside_runtime": "techpanda/furniture/",
-  "private_key_location": "%USERPROFILE%/Documents/TechPanda/NeonPlan3D/keys/techpanda-ed25519.pem",
-  "private_key_in_repo": false
+﻿{
+    "upstream":  "Mastershort/neonplan3d",
+    "baseline_tag":  "v4.0.2",
+    "baseline_commit":  "503bcb368ba06cd8e31e2df6da1a1000158cf275",
+    "custom_upstream_file_changes":  [
+                                         {
+                                             "path":  "frontend/src/components/editor.ts",
+                                             "change":  "Add native selected-furniture infrastructure configuration forms stored through the editor\u0027s undoable Building.mods extension data; context-sensitive recorder, camera, router/AP and switch settings with existing HA entity pickers and channel duplicate protection.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/build.mjs",
+                                             "change":  "Build and fingerprint a separately lazy-loaded infrastructure manager entry bundle with an independent size budget; include it in watch and production builds.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/infrastructure-manager.ts",
+                                             "change":  "Add the downstream, separately bundled infrastructure manager UI for inventory, camera configuration, recorder capacity/channel assignments, network interfaces, switch port assignments, IP inventory/CSV, logical topology, connections and validation; persist through Building.mods and editor events.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/load-infrastructure.ts",
+                                             "change":  "Load the infrastructure manager by a cache-busted dynamic import only when requested.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add an Infrastructure Manager Extensions entry and lazy-loaded manager route with equipment locate return path.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/editor.ts",
+                                             "change":  "Add a compact selected-infrastructure action to open the lazy manager and accept manager edits through the editor undo history.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-infrastructure.js",
+                                             "change":  "Generated lazy manager bundle, separate from the editor and main bundles.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/modules.ts",
+                                             "change":  "Extend the approved executable module field contract with a plain text input field for hostnames, addresses and metadata; the furniture-only signing restriction is unchanged.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/model.ts",
+                                             "change":  "Add optional Building.mods data, reusing the existing module namespace for backward-compatible plan persistence and standard export/import.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/editor.ts",
+                                             "change":  "Add the native context-sensitive infrastructure furniture form and undoable metadata mutations; delete/duplicate operations maintain connected infrastructure references.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/editor.ts",
+                                             "change":  "Add camera horizontal/vertical FOV, full-circle azimuth, coverage color/opacity and optional ground projection controls; keep selected camera elevation synchronized with its furniture geometry and carry azimuth through furniture rotation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Merge infrastructure camera furniture metadata with bound native camera markers and carry the furniture lens pose/FOV into the native stream marker without creating duplicate camera markers.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Render a per-floor translucent 3D CCTV frustum and optional native ground projection from the camera lens pose; persistent Show-menu visibility is separate from spotlight cone visibility and follows floor Apart/Stacked transforms.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add persistent Camera field of view control to the Show menu, disabled by default.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/infrastructure.ts",
+                                             "change":  "Extend optional camera metadata with color, opacity and ground projection settings and calculate camera furniture lens poses from depth, height, azimuth and floor elevation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/modules.ts",
+                                             "change":  "Add a plain-text field to the approved module editor API for separately approved executable extensions.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/model.ts",
+                                             "change":  "Add optional Building.mods extension metadata for compatible save/export/import.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+                                             "change":  "Regenerated editor bundle for optional infrastructure configuration forms; passed existing size budget.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/infrastructure.ts",
+                                             "change":  "Add isolated optional infrastructure inventory types and pure validation/summary helpers for IP, MAC, network-scoped duplicate warnings and estimated camera coverage; stored in the approved module namespace.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/infrastructure.test.ts",
+                                             "change":  "Regression coverage for address validation, network-scoped duplicate detection, missing connection references and bounded estimated camera coverage.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "techpanda/furniture/packs/cctv-network.source.json",
+                                             "change":  "Furniture-only source for CCTV/network equipment. Sign with the existing restricted TechPanda key; this authorizes no executable module code.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/packs/cctv-network.source.json"
+                                         },
+                                         {
+                                             "path":  "techpanda/furniture/cctv-network.module.js",
+                                             "change":  "Optional downstream inventory UI source using the separately approved NeonPlan module workflow; it is not embedded in or authorized by the furniture-only pack.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/cctv-network.module.js"
+                                         },
+                                         {
+                                             "path":  ".gitignore",
+                                             "change":  "Ignore local integration backups and generated furniture pack/preview output so secrets and local artifacts are not staged accidentally. No upstream runtime behavior changes.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/packs.py",
+                                             "change":  "Add TechPanda Ed25519 public key 4d62b4e84557 to PACK_PUBLIC_KEYS and the same id to STUDIO_KEYS, restricting it to studio.* furniture-only packs with no Pro features or executable module.",
+                                             "official_keys_preserved":  [
+                                                                             "62863e45df5a",
+                                                                             "867371cc70e6",
+                                                                             "bdac241ae58b"
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/manifest.json",
+                                             "change":  "Set the downstream HACS version from techpanda/release.json (currently 4.0.2.4b3, based on upstream 4.0.2); update this value for each reviewed downstream prerelease or stable release.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated to report downstream version 4.0.2.2 and load the TechPanda solar visibility implementation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+                                             "change":  "Regenerated for downstream version 4.0.2.2 and matching frontend asset fingerprints.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add a default-enabled Solar Panels control to the existing Show menu in multi-floor Property View and persist the device preference through the existing prefs store.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Forward the Property View solar preference to the viewer while forcing existing individual-floor behavior to remain enabled.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/i18n.ts",
+                                             "change":  "Add German and English Solar Panels menu labels and hint text.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.ts",
+                                             "change":  "Route existing garden and wall solar primitives into separate per-floor buffers rather than the merged walls/furniture buffers.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/roof.ts",
+                                             "change":  "Route existing roof solar primitives into separate per-roof-part buffers using the native pushModules renderer.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Add independently hideable batched solar layers and route composed ground-face arrays to their source plan floor; preserve native live overlays and keep solar placement independent of roof lift/fade.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.test.ts",
+                                             "change":  "Assert floor-mounted solar buffers remain separate from walls, furniture and shared line geometry.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/roof.test.ts",
+                                             "change":  "Assert native roof solar geometry is separated from roof body triangles and edge lines.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/screenshot.mjs",
+                                             "change":  "Add deterministic Property View solar enabled/disabled preview shots and a preference reload assertion; identify known optional preview-only missing-pack and favicon 404s without masking other browser errors.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated native viewer bundle containing the independently toggleable solar geometry layers.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-card-editor.js",
+                                             "change":  "Regenerated with synchronized frontend strings and downstream asset fingerprints.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/site.ts",
+                                             "change":  "Compose secondary site-plan solar fields and strings into read-only Property View, transform their placement and references, and retain a runtime floor association for ground-face arrays.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/model.ts",
+                                             "change":  "Add optional runtime-only siteFloorId metadata to SolarField for Property View floor routing; it is not persisted in plan storage.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/site.test.ts",
+                                             "change":  "Cover secondary roof-field composition and live bindings, plus site-transformed ground-array position, rotation, elevation and native floor-geometry generation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Render the shared-Three infrastructure route overlay from data supplied by the lazy manager, expose equipment/label visibility controls, and split CCTV/network furniture geometry into independently visible and pickable batches.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.ts",
+                                             "change":  "Batch CCTV furniture and network equipment into separate buffers so their visibility can be controlled independently while preserving item pick ranges.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/infrastructure.ts",
+                                             "change":  "Estimate cable path lengths from actual floor elevations, produce route segments, recognize equipment item ids stored in signed furniture pack types, and validate switch port/PoE and recorder channel allocations. Bullet CCTV furniture coverage anchors now start at the redesigned analog/IP bullet lens plane; other camera models keep the existing pose rule.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Forward independent Wi-Fi and network-connection visibility preferences to the native viewer. Pass the furniture type into the camera pose helper for bullet lens alignment.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add persistent, default-off Show controls for estimated Wi-Fi and network connection geometry.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Suppress the generic selected-furniture wireframe ghost for only the TechPanda Wi-Fi router and access point pack item types; furniture selection, hit testing and editing remain active.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d-selection.test.ts",
+                                             "change":  "Cover the targeted furniture selection ghost policy: router and access point are suppressed while other furniture types keep their wireframe.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/load-smart-rgb.ts",
+                                             "change":  "Load the Smart RGB manager chunk on demand through a cache-busted dynamic import.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-config.ts",
+                                             "change":  "Define versioned furniture.mods configuration, stable fixture IDs, explicitly assigned entity bindings and firmware zone mapping; new fixtures start unbound, saved explicit bindings and sparse/empty LED edge maps remain intact, and implicit wall mounting matches the native pack default.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/model.ts",
+                                             "change":  "Classify Smart RGB pack fixtures as decorative self-illuminating devices, never conventional lamps, even if a legacy or malformed pack definition includes lamp metadata; ordinary lamp classification is unchanged.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Refresh native RGB furniture geometry and animation state when its bound Home Assistant light, sensor, pattern, brightness, speed or colour state changes; restore the saved plan configuration after asynchronous lazy-runtime loading and refresh native floor geometry after lazy renderer registration even when the plan key is unchanged.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/module-scene.ts",
+                                             "change":  "Allow explicitly narrow module line widths so animated RGB flow ribbons can match physical LED strips instead of using the much wider energy-cable minimum.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Expose refreshFurniture() to rebuild the native viewer geometry for the current shown plan after an isolated lazy furniture renderer registers, bypassing same-plan-key update suppression without changing plan data.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-geometry.ts",
+                                             "change":  "Generate bounded shared-edge hex and triangular panel/groove layout geometry.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-runtime.ts",
+                                             "change":  "Render only configured RGB strip geometry through native viewer buffers. No entity binding means neutral charcoal and no animation; bound entities must report on with valid colour and nonzero brightness. Multizone edges require their own zone-on report or explicit active zone entity. Active effect ribbons use the native narrow, non-additive pipe layer rather than additive energy-cable halos, and remain aligned with physical strips. Smart RGB does not emit room lighting. The isolated lazy bundle keeps stable furniture-local transforms and does not rely on a duplicate main-bundle pack registry.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-services.ts",
+                                             "change":  "Call existing Home Assistant entity services from the isolated Smart RGB manager; no direct browser-to-controller calls.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-manager.ts",
+                                             "change":  "Add the lazy editor for fixture layouts, raised panels, assigned RGB edges, bindings, and HA service controls.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-entry.ts",
+                                             "change":  "Register the Smart RGB runtime and manager in the independently lazy-loaded bundle.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/furniture.ts",
+                                             "change":  "Allow the native furniture builder to consume the Smart RGB triangle geometry callback.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-config.test.ts",
+                                             "change":  "Cover unbound defaults, retained explicit bindings, firmware zone mappings, sanitization, persistence across plan cloning, and saved sparse/empty edge maps.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-geometry.test.ts",
+                                             "change":  "Cover connected-hex shared edges, triangular layout/grooves, and bounded geometry generation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-runtime.test.ts",
+                                             "change":  "Cover strict unbound/off/unavailable/zero-brightness behavior, per-zone state and brightness, neutral geometry, pipe-only non-additive animation, exclusion from conventional room lighting, retained ordinary lamp behavior, exact strip alignment across transforms, and rendering when the lazy bundle has no shared pack registry.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/smart-rgb-services.test.ts",
+                                             "change":  "Verify Home Assistant service routing and no-op behavior for unavailable/unconfigured entities.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-smart-rgb.js",
+                                             "change":  "Generated isolated Smart RGB manager and viewer bundle (52.3 KB); package at integration frontend root and load on demand. Viewer geometry resolves without cross-bundle pack registry state. Explicit entity/state gating renders inactive fixtures charcoal; animated strips use the narrow non-additive pipe layer.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated native viewer bundle for narrow Smart RGB pipe widths; keeps decorative RGB strips out of the additive energy-cable layer.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated for decorative Smart RGB fixtures to remain excluded from conventional room-light classification while normal lamps are unchanged.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Allow the existing furniture mounting-height control to accept the backend-supported -5 m lower bound for below-ground placement.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/building-controller.ts",
+                                             "change":  "Clamp saved furniture mounting heights to the backend-supported -5 m to 10 m range.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated main frontend bundle for the existing furniture mounting control\u0027s below-ground range and bounded save normalization.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/build.mjs",
+                                             "change":  "Split the viewer\u0027s lazy underground inspection module and shared chunk into packageable ESM files while retaining the established viewer bundle budget.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/underground-inspection.ts",
+                                             "change":  "Provide lazy underground tank detection, rotated floor cutouts, calibrated percent/depth/volume measurement and read-only indicator values.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/underground-tank-settings.ts",
+                                             "change":  "Show underground tank measurement configuration, internal geometry/capacity, remaining capacity and read-only status entities in the editor.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/editor.ts",
+                                             "change":  "Expose underground tank settings for a selected tank and allow resizing while preserving its configured top elevation.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Pass the persisted underground inspection state into the viewer and rebuild live state on toggle changes.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/packs.ts",
+                                             "change":  "Export the stable underground tank type and preserve normalized negative mount height through existing furniture support.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.ts",
+                                             "change":  "Build temporary localized floor holes above underground tank footprints and suppress underground furniture geometry when inspection is off.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Lazy-load tank inspection helpers, rebuild floor cutouts, gate underground visuals and water on valid sensor readings, animate live level geometry until it reaches sensor targets, and preserve floor-local transforms.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add the persisted default-off Underground tanks Show-menu control and pass its preference to the production viewer.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated viewer entry with the lazy underground inspection loader and dynamic chunk references.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/chunks/chunk-ZLS4GFIZ.js",
+                                             "change":  "Generated shared viewer geometry dependency for the lazy underground inspection chunk.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/chunks/underground-inspection-NEBRJLE7.js",
+                                             "change":  "Generated lazy underground inspection module for floor cutouts and water measurement.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+                                             "change":  "Generated editor bundle with tank measurement, capacity and read-only status configuration.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated main bundle with persisted underground inspection toggle and tank editor support.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/packs.ts",
+                                             "change":  "Infer the existing underground tank pack items below-grade placement from their current dimensions only when mount_y is unset; preserve all explicit saved elevations.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/underground-inspection.ts",
+                                             "change":  "Generate a render-only floor aperture for underground tanks whose saved elevation is negative or is unset and therefore uses the pack default.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.ts",
+                                             "change":  "Build underground tank bodies and cyan boundary lines in separate per-floor geometry buffers during inspection so only the tank can use translucent materials and correct rotated footprints.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Render underground tank inspection geometry translucently, retain floor-local transforms and picking, and focus a selected tank from an elevated isometric camera.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "Expose the viewer focus action for an existing underground tank without changing plan data.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/panel.ts",
+                                             "change":  "Add per-tank Focus Tank actions to the Show menu; enable the existing inspection preference, select the tank floor and focus the native viewer.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated main bundle with the underground tank focus action and preference handling.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+                                             "change":  "Regenerated editor bundle after the shared view component gained the underground tank focus action.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated viewer entry with translucent tank geometry, focus camera behavior and renamed lazy inspection chunk references.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/chunks/chunk-AXHOQEID.js",
+                                             "change":  "Generated shared viewer geometry dependency for underground tank inspection rendering.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/chunks/underground-inspection-TZR76RO6.js",
+                                             "change":  "Generated lazy inspection helper with implicit below-grade tank footprint support.",
+                                             "official_keys_preserved":  [
+
+                                                                         ],
+                                             "source_of_truth":  "techpanda/release.json"
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/furniture.ts",
+                                             "change":  "Allow only underground inspection builds to suppress dense signed-pack part edges, avoiding duplicate wireframes while preserving normal furniture rendering.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/build.ts",
+                                             "change":  "Render one compact muted boundary per inspected underground tank and subdue only its localized cutaway rim; retain localized cutouts and one tank body per placed ID.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/underground-rendering.ts",
+                                             "change":  "Share underground inspection body and outline material policy with normal depth testing and restrained non-additive colors.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Apply depth-tested underground body, outline and selected ghost materials, and prevent tank hit testing through intervening floor or roof geometry.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated viewer entry for depth-tested underground tank rendering and occlusion-aware selection.",
+                                             "source_of_truth":  "techpanda/release.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         }
+                                     ],
+    "custom_source_outside_runtime":  "techpanda/furniture/",
+    "private_key_location":  "%USERPROFILE%/Documents/TechPanda/NeonPlan3D/keys/techpanda-ed25519.pem",
+    "private_key_in_repo":  false
 }

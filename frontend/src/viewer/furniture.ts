@@ -1624,10 +1624,10 @@ function contactShadow(shadow: GeoBuffer, tf: Tf, w: number, d: number, strength
 }
 
 /** `still`: a picture of the item (a preview), so a pack's robot vacuum keeps its robot instead of driving it (#645). */
-export function pushFurniture(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base = 0, still = false): void {
+export function pushFurniture(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base = 0, still = false, suppressPackEdges = false): void {
   // a mirrored item needs no rewinding here: boxes, lofts and upright cylinders wind themselves (ccw),
   // lying cylinders and the contact shadow rewind themselves when the transform mirrors (#159)
-  pushUpright(buf, lines, shadow, f, base, still);
+  pushUpright(buf, lines, shadow, f, base, still, suppressPackEdges);
 }
 
 /** Swap the second and third vertex of every triangle from `from` on (positions, colours, folds, uvs, tiles). */
@@ -1652,33 +1652,33 @@ export function flipWinding(buf: GeoBuffer, from: number): void {
   }
 }
 
-function pushUpright(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false): void {
+function pushUpright(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false, suppressPackEdges = false): void {
   // pack items place their parts at `base` themselves; built-in models are drawn on the floor and
   // lifted as a whole (a dryer on the washer, a shelf on the wall), without a shadow on the floor
   // the mount height is absolute: a wall cabinet drawn at 1.45 m moves by the difference (up or down)
   const lift = packItem(f.type) ? 0 : base - builtinBase(f);
-  if (packItem(f.type) || Math.abs(lift) < 0.001) return buildFurniture(buf, lines, shadow, f, base, still);
+  if (packItem(f.type) || Math.abs(lift) < 0.001) return buildFurniture(buf, lines, shadow, f, base, still, suppressPackEdges);
   const p0 = buf.p.length;
   const l0 = lines.p.length;
   const s0 = shadow.p.length;
-  buildFurniture(buf, lines, base < 0.05 ? shadow : new GeoBuffer(), f, 0);
+  buildFurniture(buf, lines, base < 0.05 ? shadow : new GeoBuffer(), f, 0, still, suppressPackEdges);
   for (let i = p0 + 1; i < buf.p.length; i += 3) buf.p[i] += lift;
   for (let i = l0 + 1; i < lines.p.length; i += 3) lines.p[i] += lift;
   // in the garden the item stands lower than the floor: its shadow goes down with it
   if (base < 0) for (let i = s0 + 1; i < shadow.p.length; i += 3) shadow.p[i] += lift;
 }
 
-function buildFurniture(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false): void {
+function buildFurniture(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false, suppressPackEdges = false): void {
   const before = finish;
   finish = finishColors(f);
   try {
-    buildModel(buf, lines, shadow, f, base, still);
+    buildModel(buf, lines, shadow, f, base, still, suppressPackEdges);
   } finally {
     finish = before;
   }
 }
 
-function buildModel(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false): void {
+function buildModel(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Furniture, base: number, still = false, suppressPackEdges = false): void {
   const a = f.rotation * DEG;
   const c = Math.cos(a);
   const s = Math.sin(a);
@@ -1945,7 +1945,7 @@ function buildModel(buf: GeoBuffer, lines: LineBuffer, shadow: GeoBuffer, f: Fur
         const skip = !still && (packSpinAxis(item) || live) ? (p: PackPart) => !!p.spin || !!p.bind || !!own?.(p) : own;
         const smartRgb = typeof window === "undefined" ? null : window.__tpSmartRgbDraw?.(f, base, window.__tpSmartRgbStates ?? {});
         if (smartRgb) for (const face of smartRgb) buf.tri(face.a, face.b, face.c, new Color(face.color));
-        else packModel(b, item, w, d, h, base, null, null, skip);
+        else packModel(b, item, w, d, h, base, null, null, skip, suppressPackEdges);
         // items on furniture, walls or ceilings cast no shadow on the floor
         if (base > 0.05) return;
       } else b.box(-w / 2, w / 2, 0, h, -d / 2, d / 2, C.body, C.bodyTop, EDGE_FURN);
@@ -1984,6 +1984,7 @@ function packModel(
   glow: number | null,
   only: ((p: PackItem["parts"][number]) => boolean) | null = null,
   skip: ((p: PackItem["parts"][number]) => boolean) | null = null,
+  suppressEdges = false,
 ): void {
   const onlyGlow = !!only;
   const advent = item.parts.some((p) => p.advent) ? adventCandles() : 4;
@@ -2009,7 +2010,7 @@ function packModel(
     const y1 = base + Math.min(h, (p.y + p.h) * h);
     const c0 = b.colors.length;
     // "glow" lines are as bright as the wall lines, so a pack item can be drawn like the walls
-    const edges = p.edges === "glow" ? EDGE_TOP : p.edges === "faint" ? EDGE_FAINT : p.edges ? EDGE_FURN : null;
+    const edges = suppressEdges ? null : p.edges === "glow" ? EDGE_TOP : p.edges === "faint" ? EDGE_FAINT : p.edges ? EDGE_FURN : null;
     // a turned part draws through a builder whose coordinates turn around the part's centre
     const bb = p.rot ? b.rotated(p.x * w, p.z * d, p.rot) : b;
     if (p.shape === "cyl" && (p.axis === "x" || p.axis === "z")) {

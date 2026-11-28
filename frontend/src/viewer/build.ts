@@ -17,6 +17,7 @@ import { freeWallRoomLeft, generateWalls, locateOpening, openingHost, placeWallP
 import { clipConvex, isConvex } from "../geometry/area.ts";
 import { holeInRoom, insetHole, mergeHoles } from "../geometry/holes.ts";
 import { pushFurniture } from "./furniture.ts";
+import { UNDERGROUND_TANK_RENDER_STYLE } from "../underground-rendering.ts";
 import { mountBase, packItem, type PackItem } from "../packs.ts";
 import { fitParts } from "../pack-scale.ts";
 import { pushOutdoor } from "./outdoor.ts";
@@ -302,6 +303,10 @@ export function buildFloorGeometry(
   const roomTris: FloorGeometry["roomTris"] = [];
   const holeLines = new LineBuffer();
   const cutHoles: Vec2[][] = [];
+  const undergroundFootprints = undergroundInspection
+    ? floor.furniture.filter((f) => packItem(f.type)?.group === "underground_water_storage" && mountBase(floor, f) < 0).map(furnitureFootprint)
+    : [];
+  const undergroundCutoutRim = new Color(UNDERGROUND_TANK_RENDER_STYLE.outline.color).multiplyScalar(0.42);
   for (const room of floor.rooms) {
     if (room.points.length < 3) continue;
     const poly = ccw(room.points);
@@ -322,6 +327,10 @@ export function buildFloorGeometry(
     });
     const inside = mergeHoles(parts).map((h) => insetHole(ccw(h), 0.003));
     cutHoles.push(...inside);
+    const tankParts = undergroundFootprints.flatMap((h) => {
+      const clipped = dropRepeats(clipConvex(poly, h));
+      return clipped.length >= 3 && Math.abs(polygonArea(clipped)) > 0.01 ? [ccw(clipped)] : [];
+    });
     const all = [...poly, ...inside.flat()];
     const start = floorBuf.count;
     for (const [i, j, l] of triangulate(poly, inside)) {
@@ -342,13 +351,17 @@ export function buildFloorGeometry(
     };
     sides(poly);
     for (const h of inside) {
+      const tankCutout = tankParts.some((part) => {
+        const overlap = dropRepeats(clipConvex(h, part));
+        return overlap.length >= 3 && Math.abs(polygonArea(overlap)) > 0.01;
+      });
       // the hole's inner faces look into the hole
       sides([...ccw(h)].reverse());
       for (let i = 0; i < h.length; i++) {
         const a = h[i];
         const b = h[(i + 1) % h.length];
-        // a bright rim like the walls' tops, so the opening reads from above
-        holeLines.seg([a[0], 0.006, a[1]], [b[0], 0.006, b[1]], EDGE_TOP);
+        // stair apertures retain their bright rim; an inspection cutaway uses a muted slate-blue trace.
+        holeLines.seg([a[0], 0.006, a[1]], [b[0], 0.006, b[1]], tankCutout ? undergroundCutoutRim : EDGE_TOP);
         holeLines.seg([a[0], -SLAB, a[1]], [b[0], -SLAB, b[1]], EDGE_SOFT);
       }
     }
@@ -748,17 +761,21 @@ export function buildFloorGeometry(
       f = { ...f, x: at.x, z: at.z };
       base = at.y;
     }
-    pushFurniture(target, targetLines, shadow, f, base);
+    // The inspection outline is a single outer silhouette. Pack-internal edge lines are suppressed here so the
+    // concrete parts do not acquire a second, dense wireframe layer.
+    pushFurniture(target, targetLines, shadow, f, base, false, undergroundTank);
     if (undergroundTank) {
       const corners = furnitureFootprint(f);
-      const edge = new Color(0x37e0ff);
+      const edge = new Color(UNDERGROUND_TANK_RENDER_STYLE.outline.color);
+      const top = base + f.h + 0.001;
       for (let i = 0; i < corners.length; i++) {
         const a = corners[i];
         const b = corners[(i + 1) % corners.length];
-        undergroundTankLines.seg([a[0], base + 0.01, a[1]], [b[0], base + 0.01, b[1]], edge);
-        // The top rim sits just above the floor cut so it remains readable at all inspection angles.
-        undergroundTankLines.seg([a[0], base + f.h + 0.03, a[1]], [b[0], base + f.h + 0.03, b[1]], edge);
-        undergroundTankLines.seg([a[0], base + 0.01, a[1]], [a[0], base + f.h, a[1]], edge);
+        undergroundTankLines.seg([a[0], base, a[1]], [b[0], base, b[1]], edge);
+        // The top trace sits 1 mm above the associated floor. It remains depth-tested and is hidden by any
+        // intervening roof or floor surface.
+        undergroundTankLines.seg([a[0], top, a[1]], [b[0], top, b[1]], edge);
+        undergroundTankLines.seg([a[0], base, a[1]], [a[0], top, a[1]], edge);
       }
       undergroundTankTris.push({ id: f.id, start, end: target.count });
     }
