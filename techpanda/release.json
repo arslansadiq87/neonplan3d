@@ -8,7 +8,7 @@
     "previous_downstream_version":  "4.0.2.4b8",
     "downstream_version":  "4.0.2.4b9",
     "release_tag":  "v4.0.2.4b9",
-    "release_status":  "prepared_testing_prerelease",
+    "release_status":  "published_testing_prerelease",
     "assets_sha256":  {
                           "neonplan3d.zip":  "536249dd11163572837f9fbcd3d845f3ffa26e5ee7e9aed9611df238d331fbc2",
                           "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93",
@@ -50,5 +50,7 @@
                                      "neonplan3d-editor.js":  1154.7,
                                      "neonplan3d-infrastructure.js":  46.7,
                                      "neonplan3d-smart-rgb.js":  52.3
-                                 }
+                                 },
+    "published_commit":  "a2beda03ad64706192307e8cbec9846f0d39e579",
+    "github_actions_run":  "46149460927"
 }
