@@ -355,6 +355,9 @@ const CEILING_GAP = 0.005;
 export function mountBase(floor: Floor, f: Pick<Furniture, "type" | "x" | "z" | "h"> & { mount_y?: number | null; variant?: string | null }): number {
   const item = packItem(f.type);
   if (f.mount_y != null) return f.mount_y;
+  // A tank's saved plan position is its footprint. When no elevation was saved, its pack group
+  // supplies the below-grade default: the tank top sits at the floor and its body extends down.
+  if (item?.group === "underground_water_storage") return -f.h;
   // an access point under the ceiling, a slim water heater on the wall (drawn from 0 and lifted by this)
   const tech = techBase(f, floor.height);
   if (tech !== null) return tech;

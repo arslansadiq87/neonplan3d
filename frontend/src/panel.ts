@@ -25,7 +25,7 @@ import "./components/underground-tank-settings.ts";
 import "./components/view3d.ts";
 import { formatPower } from "./components/view3d.ts";
 import { languageReady, loadLanguage, translate, type I18nKey } from "./i18n.ts";
-import type { Building, StartView } from "./model.ts";
+import type { Building, Floor, Furniture, StartView } from "./model.ts";
 import { controls, tokens } from "./styles.ts";
 import type { HomeAssistant } from "./types.ts";
 import type { MarkerMode } from "./components/view3d.ts";
@@ -437,6 +437,26 @@ export class Floorplan3dPanel extends LitElement {
   private setExplode(explode: boolean): void {
     this._explode = explode;
     prefs.set("explode", explode ? "1" : "0");
+  }
+
+  private async focusUndergroundTank(floor: Floor, tank: Furniture): Promise<void> {
+    this._undergroundTanks = true;
+    prefs.set("underground_tanks", "1");
+    this._floorId = floor.id;
+    this._roomId = null;
+    this._showOpen = false;
+    await this.updateComplete;
+    const view = this.view3d() as (HTMLElement & {
+      focusUndergroundTank(floorId: string, tank: Furniture): Promise<void>;
+      floorId: string | null;
+      roomId: string | null;
+      undergroundTanksVisible: boolean;
+    }) | null;
+    if (!view) return;
+    view.floorId = floor.id;
+    view.roomId = null;
+    view.undergroundTanksVisible = true;
+    await view.focusUndergroundTank(floor.id, tank);
   }
 
   /** ?room= / ?show= (a notification's link): into the room, or to the device, once the plan and the view are there. */
@@ -1620,6 +1640,9 @@ export class Floorplan3dPanel extends LitElement {
                 if (v) v.undergroundTanksVisible = this._undergroundTanks;
               }}>Underground tanks</button>`
             : nothing}
+          ${b.floors.flatMap((floor) => floor.furniture
+            .filter((f) => f.type === UNDERGROUND_TANK_TYPE)
+            .map((tank, index) => html`<button class="fp3d-chip" title="Enable underground inspection and center the 3D view on this tank" @click=${() => void this.focusUndergroundTank(floor, tank)}>◎ Focus Tank · ${tank.name?.trim() || `${floor.name || "Floor"} ${index + 1}`}</button>`))}
           ${!this._floorId && b.settings.roof.type !== "none"
             ? html`<div class="fp3d-seg">
                 <button aria-pressed=${this._keepRoof} title=${this.t("roof_keep_hint")} @click=${() => this.setKeepRoof(!this._keepRoof)}>${this.t("roof_keep")}</button>

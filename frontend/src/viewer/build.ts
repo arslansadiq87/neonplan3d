@@ -77,6 +77,10 @@ export interface FloorGeometry {
   holes: Vec2[][];
   /** Walls (with folding upper parts) and furniture. */
   walls: BufferGeometry;
+  /** Below-grade tank bodies are separate so inspection can render them translucently. */
+  undergroundTanks: BufferGeometry;
+  undergroundTankLines: BufferGeometry;
+  undergroundTankTris: { id: string; start: number; end: number }[];
   /** Pack-based CCTV and network equipment, separated for independent visibility. */
   infrastructureNetwork:BufferGeometry;
   infrastructureCctv:BufferGeometry;
@@ -719,16 +723,21 @@ export function buildFloorGeometry(
 
   // lamps are drawn live by the viewer (they glow with their light)
   const furnitureTris: FloorGeometry["furnitureTris"] = [];
+  const undergroundTankBuf = new GeoBuffer();
+  const undergroundTankLines = new LineBuffer();
+  const undergroundTankTris: FloorGeometry["undergroundTankTris"] = [];
   const infrastructureNetworkBuf=new GeoBuffer(),infrastructureCctvBuf=new GeoBuffer();
   const infrastructureNetworkTris:FloorGeometry["furnitureTris"]=[],infrastructureCctvTris:FloorGeometry["furnitureTris"]=[];
   for (const item of floor.furniture) {
-    if (packItem(item.type)?.group === "underground_water_storage" && !undergroundInspection) continue;
+    const pack = packItem(item.type);
+    const undergroundTank = pack?.group === "underground_water_storage";
+    if (undergroundTank && !undergroundInspection) continue;
     if (item.type.endsWith(":underground_concrete_water_tank") && !undergroundInspection) continue;
     if (isLamp(item.type)) continue;
     const isInfrastructure=item.type.startsWith("pack:studio.techpanda.cctv_network:");
     const isCctv=/:(analog_bullet_camera|ip_bullet_camera|wifi_camera|dome_camera|ptz_camera)$/.test(item.type);
-    const target=isInfrastructure?(isCctv?infrastructureCctvBuf:infrastructureNetworkBuf):wallBuf;
-    const targetLines=lines;
+    const target=undergroundTank?undergroundTankBuf:isInfrastructure?(isCctv?infrastructureCctvBuf:infrastructureNetworkBuf):wallBuf;
+    const targetLines=undergroundTank?undergroundTankLines:lines;
     const start = target.count;
     const l0 = targetLines.p.length / 6;
     let f = item;
@@ -740,13 +749,26 @@ export function buildFloorGeometry(
       base = at.y;
     }
     pushFurniture(target, targetLines, shadow, f, base);
+    if (undergroundTank) {
+      const corners = furnitureFootprint(f);
+      const edge = new Color(0x37e0ff);
+      for (let i = 0; i < corners.length; i++) {
+        const a = corners[i];
+        const b = corners[(i + 1) % corners.length];
+        undergroundTankLines.seg([a[0], base + 0.01, a[1]], [b[0], base + 0.01, b[1]], edge);
+        // The top rim sits just above the floor cut so it remains readable at all inspection angles.
+        undergroundTankLines.seg([a[0], base + f.h + 0.03, a[1]], [b[0], base + f.h + 0.03, b[1]], edge);
+        undergroundTankLines.seg([a[0], base + 0.01, a[1]], [a[0], base + f.h, a[1]], edge);
+      }
+      undergroundTankTris.push({ id: f.id, start, end: target.count });
+    }
     if(isInfrastructure)(isCctv?infrastructureCctvTris:infrastructureNetworkTris).push({id:f.id,start,end:target.count});
     // a wardrobe or a stair reaching above the cut height is cut with the walls, so it hides nothing behind it
     if (base + f.h > cut + 0.05) {
       cutAbove(target, start, cut, FURN_OFFSET);
       cutLinesAbove(targetLines, l0, cut, FURN_OFFSET);
     }
-    if(!isInfrastructure)furnitureTris.push({ id: f.id, start, end: target.count });
+    if (!isInfrastructure && !undergroundTank) furnitureTris.push({ id: f.id, start, end: target.count });
   }
 
   return {
@@ -754,6 +776,9 @@ export function buildFloorGeometry(
     roomTris,
     holes: cutHoles,
     walls: wallBuf.geometry(),
+    undergroundTanks: undergroundTankBuf.geometry(),
+    undergroundTankLines: undergroundTankLines.geometry(),
+    undergroundTankTris,
     infrastructureNetwork:infrastructureNetworkBuf.geometry(),infrastructureCctv:infrastructureCctvBuf.geometry(),
     infrastructureNetworkTris,infrastructureCctvTris,
     solar: solarBuf.geometry(),

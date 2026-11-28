@@ -510,6 +510,72 @@
       "change": "Regenerated main bundle with persisted underground inspection toggle and tank editor support.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/packs.ts",
+      "change": "Infer the existing underground tank pack items below-grade placement from their current dimensions only when mount_y is unset; preserve all explicit saved elevations.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/underground-inspection.ts",
+      "change": "Generate a render-only floor aperture for underground tanks whose saved elevation is negative or is unset and therefore uses the pack default.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/build.ts",
+      "change": "Build underground tank bodies and cyan boundary lines in separate per-floor geometry buffers during inspection so only the tank can use translucent materials and correct rotated footprints.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/viewer/viewer3d.ts",
+      "change": "Render underground tank inspection geometry translucently, retain floor-local transforms and picking, and focus a selected tank from an elevated isometric camera.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/components/view3d.ts",
+      "change": "Expose the viewer focus action for an existing underground tank without changing plan data.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "frontend/src/panel.ts",
+      "change": "Add per-tank Focus Tank actions to the Show menu; enable the existing inspection preference, select the tank floor and focus the native viewer.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/furniture/upstream-modifications.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d.js",
+      "change": "Regenerated main bundle with the underground tank focus action and preference handling.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-editor.js",
+      "change": "Regenerated editor bundle after the shared view component gained the underground tank focus action.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+      "change": "Regenerated viewer entry with translucent tank geometry, focus camera behavior and renamed lazy inspection chunk references.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/chunks/chunk-AXHOQEID.js",
+      "change": "Generated shared viewer geometry dependency for underground tank inspection rendering.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
+    },
+    {
+      "path": "custom_components/neonplan3d/frontend/chunks/underground-inspection-TZR76RO6.js",
+      "change": "Generated lazy inspection helper with implicit below-grade tank footprint support.",
+      "official_keys_preserved": [],
+      "source_of_truth": "techpanda/release.json"
     }
   ],
   "custom_source_outside_runtime": "techpanda/furniture/",

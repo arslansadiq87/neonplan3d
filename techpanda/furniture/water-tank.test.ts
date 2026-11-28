@@ -5,11 +5,12 @@ import test from "node:test";
 import { bindValue, liveGroups } from "../../frontend/src/live-parts.ts";
 import { fitParts } from "../../frontend/src/pack-scale.ts";
 import { emptyBuilding, newFloor, type Furniture } from "../../frontend/src/model.ts";
-import { furnitureSize, packType, setPacks } from "../../frontend/src/packs.ts";
+import { furnitureSize, mountBase, packType, setPacks } from "../../frontend/src/packs.ts";
 import type { PackItem } from "../../frontend/src/packs.ts";
 import { GeoBuffer, LineBuffer } from "../../frontend/src/viewer/geo.ts";
 import { pushFurniture, pushPackLive } from "../../frontend/src/viewer/furniture.ts";
 import { floorCutouts, readTankWater } from "../../frontend/src/underground-inspection.ts";
+import { buildFloorGeometry } from "../../frontend/src/viewer/build.ts";
 
 const source = JSON.parse(readFileSync(new URL("./packs/water-tanks.source.json", import.meta.url), "utf8"));
 const pack = { id: source.id, name: source.name, items: source.items };
@@ -130,13 +131,31 @@ test("underground tank bottom-origin mounting keeps its top at ground level at -
   assert.equal(restored.floors[0].furniture[0].mount_y, -2);
 });
 
+test("an underground pack tank with no saved elevation defaults below its assigned floor", () => {
+  setPacks([pack]);
+  const ground = newFloor("ground", "Ground Floor", 0);
+  const tank = { id: "production-tank", type: packType(pack.id, underground.id), x: 4.075, z: 15.9, rotation: 90, w: 7.8, d: 2.05, h: 2, variant: null, mount_y: null } as Furniture;
+  ground.furniture = [tank];
+  assert.equal(mountBase(ground, tank), -2);
+  const holes = floorCutouts(ground);
+  assert.equal(holes.length, 1);
+  assert.equal(holes[0].length, 4);
+  const geo = buildFloorGeometry(ground, 0.24, 0.12, holes, [], undefined, null, undefined, true);
+  assert.ok(geo.undergroundTanks.getAttribute("position").count > 0, "the body is in its own inspection layer");
+  assert.equal(geo.undergroundTankTris.map((part) => part.id).join(","), tank.id);
+  assert.ok(geo.undergroundTankLines.getAttribute("position").count >= 24, "the rotated footprint has cyan outline geometry");
+  assert.equal(geo.furnitureTris.some((part) => part.id === tank.id), false, "separate tank geometry is not indexed in the wall mesh");
+  assert.equal(readTankWater(tank, {}), null, "an unbound tank has no fabricated water reading");
+});
+
 test("underground tank cutouts follow rotated negative-height tanks and ignore surface tanks", () => {
   const ground = newFloor("ground", "Ground Floor", 0);
   const base = { id: "tank", type: packType(pack.id, underground.id), x: 1, z: 2, rotation: 0, w: 3, d: 2, h: 2, variant: null };
-  ground.furniture = [{ ...base, mount_y: -2 }, { ...base, id: "tank-2", x: 5, rotation: 90, mount_y: -2 }, { ...base, id: "roof-tank", mount_y: 0 }] as Furniture[];
+  ground.furniture = [{ ...base, mount_y: -2 }, { ...base, id: "tank-2", x: 5, rotation: 90, mount_y: -2 }, { ...base, id: "roof-tank", mount_y: 0 }, { ...base, id: "implicit-underground", x: 9, rotation: 90, mount_y: null }] as Furniture[];
   const holes = floorCutouts(ground);
-  assert.equal(holes.length, 2);
+  assert.equal(holes.length, 3);
   assert.notDeepEqual(holes[0], holes[1]);
+  assert.notDeepEqual(holes[1], holes[2]);
 });
 
 test("underground water readings are explicit and support percent, calibrated depth, and calibrated volume", () => {

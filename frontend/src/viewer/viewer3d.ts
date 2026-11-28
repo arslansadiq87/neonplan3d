@@ -431,6 +431,10 @@ interface FloorMaterials {
   blinds: MeshBasicMaterial;
   /** Pool water: see-through, so the basin shows below it. */
   water: MeshBasicMaterial;
+  /** The pack's concrete tank geometry stays translucent only during underground inspection. */
+  undergroundTank: MeshBasicMaterial;
+  /** Tank boundaries remain visible through walls during the intentionally cutaway inspection. */
+  undergroundTankLines: LineBasicMaterial;
   flow: MeshBasicMaterial;
   /** A module's solid pipes (not added light: they keep their colour on a bright floor). */
   pipeLine: MeshBasicMaterial;
@@ -456,6 +460,8 @@ interface FloorView {
   group: Group;
   geo: FloorGeometry;
   floorMesh: Mesh;
+  undergroundTankMesh: Mesh;
+  undergroundTankLinesMesh: LineSegments;
   shadowMesh: Mesh;
   patternMesh: Mesh;
   /** Room lighting on floors and wall faces (see lighting.ts). */
@@ -1062,6 +1068,17 @@ export class FloorplanViewer {
     this.undergroundInspection = on;
     if (this.building) this.rebuild();
     this.invalidate();
+  }
+
+  /** Enable inspection and frame one tank from an elevated isometric angle. */
+  async focusUndergroundTank(floorId: string, tank: Pick<Furniture, "type" | "x" | "z" | "w" | "d" | "h"> & { mount_y?: number | null }): Promise<void> {
+    await this.setUndergroundInspection(true);
+    const fv = this.floorMap.get(floorId);
+    if (!fv) return;
+    const base = mountBase(fv.floor, tank);
+    const size = new Vector3(tank.w, tank.h, tank.d);
+    const radius = Math.max(5, Math.min(this.distanceFor(size) * 0.72, size.length()));
+    this.focus(floorId, tank.x, tank.z, base + tank.h / 2, null, { radius, phi: 0.55, theta: -0.62 });
   }
 
   /** Show or hide solar modules while preserving the native floor/roof geometry and live overlays. */
@@ -3239,6 +3256,8 @@ export class FloorplanViewer {
       ),
       blinds: themed(makeFoldable(new MeshBasicMaterial({ map: this.blindTexture, vertexColors: true, side: DoubleSide }), mask), this.themeUniform),
       water: themed(new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false, side: DoubleSide, forceSinglePass: true }), this.themeUniform),
+      undergroundTank: themed(new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.58, depthWrite: false, side: DoubleSide, forceSinglePass: true }), this.themeUniform),
+      undergroundTankLines: new LineBasicMaterial({ vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false, depthTest: false }),
       flow: flowMaterial(this.flowTime),
       pipeLine: pipeLineMaterial(this.flowTime),
       // a module's surfaces: colour and opacity per vertex, over the floor without hiding what stands on it
@@ -3317,6 +3336,14 @@ export class FloorplanViewer {
       const materials = this.makeMaterials(mask);
       const group = new Group();
       const floorMesh = new Mesh(geo.floor, materials.floor);
+      const undergroundTankMesh = new Mesh(geo.undergroundTanks, materials.undergroundTank);
+      undergroundTankMesh.renderOrder = 5;
+      undergroundTankMesh.visible = this.undergroundInspection && geo.undergroundTanks.getAttribute("position").count > 0;
+      undergroundTankMesh.frustumCulled = false;
+      const undergroundTankLinesMesh = new LineSegments(geo.undergroundTankLines, materials.undergroundTankLines);
+      undergroundTankLinesMesh.renderOrder = 9;
+      undergroundTankLinesMesh.visible = this.undergroundInspection && geo.undergroundTankLines.getAttribute("position").count > 0;
+      undergroundTankLinesMesh.frustumCulled = false;
       const shadowMesh = new Mesh(geo.shadow, materials.shadow);
       shadowMesh.renderOrder = 1;
       const pattern = new Mesh(geo.floor, materials.pattern);
@@ -3408,6 +3435,8 @@ export class FloorplanViewer {
         pattern,
         glowMesh,
         wallMesh,
+        undergroundTankMesh,
+        undergroundTankLinesMesh,
         cctvMesh,networkMesh,
         waterMesh,
         new LineSegments(geo.lines, materials.lines),
@@ -3477,6 +3506,8 @@ export class FloorplanViewer {
         group,
         geo,
         floorMesh,
+        undergroundTankMesh,
+        undergroundTankLinesMesh,
         shadowMesh,
         patternMesh: pattern,
         glowMesh,
@@ -3873,6 +3904,8 @@ export class FloorplanViewer {
     m.glassWall.opacity = fv.o;
     m.flow.opacity = fv.o;
     m.solarLive.opacity = fv.o;
+    m.undergroundTank.opacity = 0.58 * fv.o;
+    m.undergroundTankLines.opacity = fv.o;
     m.lamps.opacity = fv.o;
     m.halos.opacity = fv.o;
     m.cones.opacity = fv.o;
@@ -5220,6 +5253,9 @@ export class FloorplanViewer {
       } else if(hit.object===fv.cctvMesh||hit.object===fv.networkMesh){
         const ranges=hit.object===fv.cctvMesh?fv.geo.infrastructureCctvTris:fv.geo.infrastructureNetworkTris;
         const id=inRange(ranges,tri);if(id)return{furnitureId:id};
+      } else if (hit.object === fv.undergroundTankMesh) {
+        const id = inRange(fv.geo.undergroundTankTris, tri);
+        if (id) return { furnitureId: id };
       } else if (hit.object === fv.wallMesh) {
         const id = inRange(fv.geo.furnitureTris, tri);
         const entity = id ? this.pickFurniture.get(id) : undefined;
@@ -5348,12 +5384,17 @@ export class FloorplanViewer {
     const floors = this.activeFloors();
     // a TV's screen and its picture, a smart fridge's doors are meshes of their own: they belong to the item too
     const extra = (f: FloorView) => [f.screenMesh, f.fridgeMesh, ...[...f.screenPics.values()].map((p) => p.mesh)];
-    const meshes = floors.flatMap((f) => [f.lampMesh, f.wallMesh,f.cctvMesh,f.networkMesh, ...extra(f)].filter((m) => m.visible));
+    const meshes = floors.flatMap((f) => [f.lampMesh, f.wallMesh, f.undergroundTankMesh, f.cctvMesh, f.networkMesh, ...extra(f)].filter((m) => m.visible));
     for (const hit of ray.intersectObjects(meshes, false)) {
       if (hit.faceIndex == null) continue;
       const fv = floors.find((f) => f.group === hit.object.parent || extra(f).includes(hit.object as Mesh))!;
       if (!fv) continue;
       if(hit.object===fv.cctvMesh||hit.object===fv.networkMesh){const list=hit.object===fv.cctvMesh?fv.geo.infrastructureCctvTris:fv.geo.infrastructureNetworkTris;const id=list.find(r=>hit.faceIndex!>=r.start&&hit.faceIndex!<r.end)?.id;if(id)return{fv,id,y:hit.point.y};continue;}
+      if (hit.object === fv.undergroundTankMesh) {
+        const id = fv.geo.undergroundTankTris.find((r) => hit.faceIndex! >= r.start && hit.faceIndex! < r.end)?.id;
+        if (id) return { fv, id, y: hit.point.y };
+        continue;
+      }
       if (hit.object !== fv.lampMesh && hit.object !== fv.wallMesh) {
         const id = this.furnitureNear(fv, hit.point.x, hit.point.z);
         if (id) return { fv, id, y: hit.point.y };

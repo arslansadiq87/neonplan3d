@@ -12,7 +12,7 @@ const numberOf = (state: string): number | null => state.trim() === "" ? null : 
 
 /** Render-only room-local floor holes; the saved Floor and Room objects are never modified. */
 export function floorCutouts(floor: Floor): Vec2[][] {
-  return floor.furniture.filter((f) => isTank(f) && (f.mount_y ?? 0) < 0).map(furnitureFootprint);
+  return floor.furniture.filter((f) => isTank(f) && (f.mount_y ?? -f.h) < 0).map(furnitureFootprint);
 }
 
 export interface TankWaterReading {

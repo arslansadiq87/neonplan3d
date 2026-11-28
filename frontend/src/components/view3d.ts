@@ -1320,6 +1320,13 @@ export class Fp3dView3d extends LitElement {
     if (changed.has("building")) this.findIndex = null;
   }
 
+  /** Enable the visual inspection mode and focus one placed tank. */
+  async focusUndergroundTank(floorId: string, tank: Furniture): Promise<void> {
+    if (!this.viewer) return;
+    await this.viewer.focusUndergroundTank(floorId, tank);
+    this.undergroundTanksVisible = true;
+  }
+
   /** Winter: what comes with the time of day and the year is looked at once a minute while the pack is there. */
   private watchWinter(on: boolean): void {
     if (on && !this.winterTimer) this.winterTimer = setInterval(() => this.syncDevices(false, true), 60_000);
