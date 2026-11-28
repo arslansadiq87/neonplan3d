@@ -14,4 +14,4 @@ This prerelease is based on the official NeonPlan 3D v4.0.2 release. It fixes un
 
 - Upstream baseline remains v4.0.2. Stable rollback remains v4.0.2.3.
 - Existing integration domain, furniture IDs, floor plans, entity bindings and user configurations remain unchanged.
-- This is a prepared testing prerelease. It has not been published, deployed to Home Assistant, or used to operate devices. Production plans and Home Assistant services were not modified.
+- Published as testing prerelease v4.0.2.4b8 targeting commit `5e38eecc026952a2245b0d7b259710df31e69a9d`. It has not been deployed to Home Assistant or used to operate devices. Production plans and Home Assistant services were not modified.

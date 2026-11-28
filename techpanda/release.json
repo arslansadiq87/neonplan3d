@@ -8,7 +8,7 @@
     "previous_downstream_version":  "4.0.2.4b7",
     "downstream_version":  "4.0.2.4b8",
     "release_tag":  "v4.0.2.4b8",
-    "release_status":  "prepared_testing_prerelease",
+    "release_status":  "published_testing_prerelease",
     "assets_sha256":  {
                           "neonplan3d.zip":  "a54d47f74681f76ef7b8b7a2aea9df3029a79a12170c3d80c0e01b64e3f9098c",
                           "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93",
