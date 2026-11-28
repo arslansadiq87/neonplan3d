@@ -8,12 +8,13 @@
     "previous_downstream_version":  "4.0.2.4b6",
     "downstream_version":  "4.0.2.4b7",
     "release_tag":  "v4.0.2.4b7",
-    "release_status":  "prepared_testing_prerelease",
+    "release_status":  "published_testing_prerelease",
     "assets_sha256":  {
                           "neonplan3d.zip":  "f49d6b1a9d5bf8038396fa540fcd75e6c9c2498ba495812b5e03b6bd9101bf81",
                           "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93",
                           "techpanda-smart-rgb-ha-examples.zip":  "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd",
-                          "techpanda-water-tanks-v4.fp3dpack":  "0ba21da74596f9a3cb14feb9d209fa6788481e6c34e0789439e86382fc15e670"
+                          "techpanda-water-tanks-v4.fp3dpack":  "0ba21da74596f9a3cb14feb9d209fa6788481e6c34e0789439e86382fc15e670",
+                          "SHA256SUMS-v4.0.2.4b7.txt":  "acc1a6913de4e708a380d70b49d16105f5b9ade293cb35649276f06267708f3f"
                       },
     "runtime_overlay_paths":  [
                                   "packs.py",

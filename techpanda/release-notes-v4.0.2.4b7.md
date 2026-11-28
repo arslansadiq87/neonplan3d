@@ -10,4 +10,4 @@ This prerelease is based on the official NeonPlan 3D v4.0.2 release. It adds the
 - Adds editor information for internal dimensions, concrete thickness assumptions, burial depth, capacity, current measured or estimated volume, remaining capacity, and read-only pump/low/overflow states. It does not operate pumps.
 - Includes a signed release-4 Water Systems pack. Existing furniture IDs remain stable.
 
-The production browser harness and screenshots are generated with `node techpanda/furniture/underground-tank-viewer-preview.mjs`. This is a testing prerelease for manual review. It has not been published. Do not use it to modify production Home Assistant plans or operate devices without separate authorization.
+The production browser harness and screenshots are generated with `node techpanda/furniture/underground-tank-viewer-preview.mjs`. This testing prerelease is published for manual review. HACS users must enable pre-releases for this repository to receive it. Do not use it to modify production Home Assistant plans or operate devices without separate authorization.
