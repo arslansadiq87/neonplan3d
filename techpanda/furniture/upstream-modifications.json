@@ -471,7 +471,7 @@
     },
     {
       "path": "frontend/src/viewer/viewer3d.ts",
-      "change": "Lazy-load tank inspection helpers, rebuild floor cutouts, gate underground visuals and water on valid sensor readings, and preserve floor-local transforms.",
+      "change": "Lazy-load tank inspection helpers, rebuild floor cutouts, gate underground visuals and water on valid sensor readings, animate live level geometry until it reaches sensor targets, and preserve floor-local transforms.",
       "official_keys_preserved": [],
       "source_of_truth": "techpanda/furniture/upstream-modifications.json"
     },

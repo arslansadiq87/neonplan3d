@@ -120,6 +120,8 @@ try {
   const save = async (name) => {
     await page.evaluate((screenshotName) => {
       const p = window.fp3dPanel;
+      p._showOpen = false;
+      p.requestUpdate();
       const modal = p.renderRoot.querySelector(".fp3d-gift");
       if (modal) [...modal.querySelectorAll("button")].at(-1)?.click();
       if (screenshotName === "tank-configuration-and-capacity") {
@@ -149,12 +151,14 @@ try {
   if (shown.holes < 2 || shown.furniture.length !== 2) throw new Error(`Cutaway and both tanks must be built: ${JSON.stringify(shown)}`);
   if (Math.abs(shown.floorGroupY - shown.expectedY) > 0.004) throw new Error(`Ground floor transformation applied incorrectly: ${JSON.stringify(shown)}`);
   await save("02-property-cutaway-multiple-tanks");
+  const levelCaptures = [];
   for (const [pct, text] of [[0, "0"], [25, "25"], [50, "50"], [75, "75"], [100, "100"]]) {
     await page.evaluate((n) => window.__setTankState("sensor.underground_tank_level", n), text);
     await new Promise((resolve) => setTimeout(resolve, 1400));
     const live = await state();
     if (!live.levels.some((level) => level.visible && Math.abs(level.target - pct / 100) < 1e-5)) throw new Error(`Expected live water level ${pct}%: ${JSON.stringify(live.levels)}`);
-    if (pct === 0 && live.levels[0]?.scaleY !== 0) throw new Error(`A 0% tank must have no fill volume: ${JSON.stringify(live.levels[0])}`);
+    if (Math.abs((live.levels[0]?.scaleY ?? NaN) - pct / 100) > 0.01) throw new Error(`Rendered fill geometry did not reach ${pct}%: ${JSON.stringify(live.levels[0])}`);
+    levelCaptures.push({ pct, value: live.levels[0].value, scaleY: live.levels[0].scaleY });
     await save(`level-${String(pct).padStart(3, "0")}`);
   }
   await page.evaluate(() => window.__setTankState("sensor.underground_tank_level", "unavailable"));
@@ -237,7 +241,7 @@ try {
     if (deleted.floors.find((floor) => floor.id === "ground").furniture.some((item) => item.id === "tank-duplicate")) throw new Error("Deleted tank remained after save/reload");
     return { resizedAndMoved: true, rotation: restoredTank.rotation, preservedTop: restoredTank.mount_y + restoredTank.h, saveReload: true, duplicateReload: true, deleteReload: true };
   });
-  const evidence = { hidden, shown, unavailable, apart, stacked, editEvidence, lazyModuleRequests: lazy.length, pageErrors: errors, failedRequests: failed };
+  const evidence = { hidden, shown, levelCaptures, unavailable, apart, stacked, editEvidence, lazyModuleRequests: lazy.length, pageErrors: errors, failedRequests: failed };
   await import("node:fs/promises").then(({ writeFile }) => writeFile(join(out, "verification.json"), JSON.stringify(evidence, null, 2)));
   console.log(JSON.stringify(evidence, null, 2));
   if (errors.length || failed.length || !lazy.length) throw new Error(`Browser verification logged errors or failed requests: ${JSON.stringify(evidence)}`);
