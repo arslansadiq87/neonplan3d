@@ -804,6 +804,54 @@
                                              "official_keys_preserved":  [
 
                                                                          ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/lazy-visibility.ts",
+                                             "change":  "Keep the latest persisted lazy-renderer visibility request authoritative across async module loading, and expose that state to every scene rebuild.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/lazy-visibility.test.ts",
+                                             "change":  "Verify persisted visibility restoration after lazy initialization, latest-request wins, and rebuilds read the same state.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/components/view3d.ts",
+                                             "change":  "After initial viewer creation and first scene build, apply the current persisted underground tank visibility preference so startup updates dropped before viewer creation are restored.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "frontend/src/viewer/viewer3d.ts",
+                                             "change":  "Use the lazy visibility controller as the authoritative underground inspection state; rebuild floor cutaways and tank geometry from that state and ignore stale async toggles.",
+                                             "source_of_truth":  "techpanda/furniture/upstream-modifications.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d.js",
+                                             "change":  "Regenerated parent/view bundle with persisted inspection preference applied after lazy viewer startup.",
+                                             "source_of_truth":  "techpanda/release.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
+                                         },
+                                         {
+                                             "path":  "custom_components/neonplan3d/frontend/neonplan3d-3d.js",
+                                             "change":  "Regenerated viewer bundle with latest-request lazy visibility state shared by tank rendering and floor scene rebuilds.",
+                                             "source_of_truth":  "techpanda/release.json",
+                                             "official_keys_preserved":  [
+
+                                                                         ]
                                          }
                                      ],
     "custom_source_outside_runtime":  "techpanda/furniture/",

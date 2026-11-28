@@ -10,11 +10,11 @@
     "release_tag":  "v4.0.2.4b9",
     "release_status":  "prepared_testing_prerelease",
     "assets_sha256":  {
-                          "neonplan3d.zip":  "0c82dc822d26b614bd9e00da54b37445254b4aa4e7f153bf922771dcc934262a",
+                          "neonplan3d.zip":  "536249dd11163572837f9fbcd3d845f3ffa26e5ee7e9aed9611df238d331fbc2",
                           "techpanda-smart-rgb-lighting-v2.fp3dpack":  "326c480c888e1368e804bc0ce28570ef4b48b8315c5df6ff55913dd0bca78b93",
                           "techpanda-smart-rgb-ha-examples.zip":  "8ba74ff767827fdac2b37dbfad616c466604972dc703dcc5e91fa4353e9c08cd",
                           "techpanda-water-tanks-v4.fp3dpack":  "0ba21da74596f9a3cb14feb9d209fa6788481e6c34e0789439e86382fc15e670",
-                          "SHA256SUMS-v4.0.2.4b9.txt":  "d5d09aff036f002d147e4ff4761f0ec02e24cfb4d6d9b2630526e4ceda9b4cbc"
+                          "SHA256SUMS-v4.0.2.4b9.txt":  "ed0f8cc4f363aac9eeee1ddd218d43ffa07868d72d15226ee16a15039c38cd81"
                       },
     "runtime_overlay_paths":  [
                                   "packs.py",
@@ -45,8 +45,8 @@
                            "SHA256SUMS-v4.0.2.4b9.txt"
                        ],
     "frontend_bundle_sizes_kb":  {
-                                     "neonplan3d.js":  803.8,
-                                     "neonplan3d-3d.js":  935.0,
+                                     "neonplan3d.js":  803.9,
+                                     "neonplan3d-3d.js":  935.4,
                                      "neonplan3d-editor.js":  1154.7,
                                      "neonplan3d-infrastructure.js":  46.7,
                                      "neonplan3d-smart-rgb.js":  52.3

@@ -1155,6 +1155,10 @@ export class Fp3dView3d extends LitElement {
         this.shownStartView = JSON.stringify(this.startViewOf());
         this.viewer.setStartView(this.startViewOf());
         this.viewer.setBuilding(this.shownBuilding()!);
+        // The persisted option can arrive while load3d() is pending, when updated() has no viewer.
+        // Restore it after the viewer and its first floor geometry are ready.
+        await this.viewer.setUndergroundInspection(this.undergroundTanksVisible);
+        if (!this.isConnected || !this.viewer) return;
         this.maybeFlyIn();
       }
       this.scheduleThumbs();

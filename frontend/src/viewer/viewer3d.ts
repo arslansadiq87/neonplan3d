@@ -16,6 +16,7 @@ import { clampIntoRoom } from "../geometry/snap.ts";
 import { activeSections, dormerRise, roofRider, roofUnderAt, sectionAbove, sectionCutsBelow } from "../roof-sections.ts";
 import { buildFloorGeometry, SLAB, stairHoleParts, type FloorGeometry } from "./build.ts";
 import { UNDERGROUND_TANK_RENDER_STYLE } from "../underground-rendering.ts";
+import { LazyVisibility } from "../lazy-visibility.ts";
 import { OrbitControls, type OrbitView } from "./controls.ts";
 import { makeFoldable, type FoldMasks } from "./fold.ts";
 import { CameraProjections, PROJECTION_LAYER, type ProjectionSurface, type ProjectorPose } from "./projection.ts";
@@ -715,8 +716,19 @@ export class FloorplanViewer {
   private solarActive = false;
   private solarVisibility = true;
   /** Whether below-ground tank models and their floor apertures are shown for inspection. */
-  private undergroundInspection = false;
   private undergroundTools: typeof import("../underground-inspection.ts") | null = null;
+  private undergroundVisibility = new LazyVisibility(
+    async () => {
+      this.undergroundTools = await import("../underground-inspection.ts");
+    },
+    () => {
+      if (this.building) this.rebuild();
+      this.invalidate();
+    },
+  );
+  private get undergroundInspection(): boolean {
+    return this.undergroundVisibility.visible;
+  }
   private cameraFrustumVisible = false;
   private infrastructureLabelsVisible = false;
   private infrastructureIpLabelsVisible = false;
@@ -1064,11 +1076,7 @@ export class FloorplanViewer {
 
   /** Rebuild only when the inspection mode changes; floor cutouts remain render-only and plan geometry is untouched. */
   async setUndergroundInspection(on: boolean): Promise<void> {
-    if (on && !this.undergroundTools) this.undergroundTools = await import("../underground-inspection.ts");
-    if (on === this.undergroundInspection) return;
-    this.undergroundInspection = on;
-    if (this.building) this.rebuild();
-    this.invalidate();
+    await this.undergroundVisibility.set(on);
   }
 
   /** Enable inspection and frame one tank from an elevated isometric angle. */
@@ -3287,6 +3295,7 @@ export class FloorplanViewer {
   }
 
   private rebuild(): void {
+    const undergroundInspection = this.undergroundVisibility.sceneRebuilt();
     if (this.palette.natural) this.palette.facade = hexColor(this.building?.settings.facade_color);
     this.usePalette();
     const previous = new Map(this.floors.map((f) => [f.floor.id, { y: f.y, o: f.o }]));
@@ -3331,19 +3340,19 @@ export class FloorplanViewer {
           }
         : undefined;
       const floorHoles = stairHoleParts(b.floors, floor);
-      if (this.undergroundInspection) floorHoles.push(...(this.undergroundTools?.floorCutouts(floor) ?? []));
-      const geo = this.dual(() => buildFloorGeometry(withVehicles(floor, this.parked), b.settings.wall_exterior, b.settings.wall_interior, floorHoles, garden, roofUnder, floor.id === groundId ? around : null, roofRise, this.undergroundInspection));
+      if (undergroundInspection) floorHoles.push(...(this.undergroundTools?.floorCutouts(floor) ?? []));
+      const geo = this.dual(() => buildFloorGeometry(withVehicles(floor, this.parked), b.settings.wall_exterior, b.settings.wall_interior, floorHoles, garden, roofUnder, floor.id === groundId ? around : null, roofRise, undergroundInspection));
       const mask: FoldMasks = { standing: { value: 0xffff }, glass: { value: 0 } };
       const materials = this.makeMaterials(mask);
       const group = new Group();
       const floorMesh = new Mesh(geo.floor, materials.floor);
       const undergroundTankMesh = new Mesh(geo.undergroundTanks, materials.undergroundTank);
       undergroundTankMesh.renderOrder = 5;
-      undergroundTankMesh.visible = this.undergroundInspection && geo.undergroundTanks.getAttribute("position").count > 0;
+      undergroundTankMesh.visible = undergroundInspection && geo.undergroundTanks.getAttribute("position").count > 0;
       undergroundTankMesh.frustumCulled = false;
       const undergroundTankLinesMesh = new LineSegments(geo.undergroundTankLines, materials.undergroundTankLines);
       undergroundTankLinesMesh.renderOrder = 9;
-      undergroundTankLinesMesh.visible = this.undergroundInspection && geo.undergroundTankLines.getAttribute("position").count > 0;
+      undergroundTankLinesMesh.visible = undergroundInspection && geo.undergroundTankLines.getAttribute("position").count > 0;
       undergroundTankLinesMesh.frustumCulled = false;
       const shadowMesh = new Mesh(geo.shadow, materials.shadow);
       shadowMesh.renderOrder = 1;
